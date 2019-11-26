@@ -1,0 +1,24 @@
+{
+    "Small Masm": {
+        "prefix": "masm-s",
+        "description": "Small Masm Program Shell",
+        "body": [
+            "\t\t.MODEL SMALL",
+            "\t\t.STACK 64\n",
+            "\t\t.DATA",
+            "",
+            "$1",
+            "",
+            "\t\t.CODE",
+            "MAIN\tPROC\tFAR\n",
+            "\t\tMOV\tAX,@DATA",
+            "\t\tMOV\tDS,AX",
+            "\t\t",
+            "\t\t$0",
+            "\t\t",
+            "MAIN\tENDP",
+            "",
+            "END\t\tMAIN"
+        ]
+    }
+}
