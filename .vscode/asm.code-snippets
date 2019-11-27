@@ -20,5 +20,16 @@
             "",
             "END\t\tMAIN"
         ]
+    },
+    "Block Comment": {
+        "prefix": "masm-bc",
+        "description": "Block comment convention",
+        "body":[
+            ";*************************************************",
+            "; **** ${1: FUNCTION DESCRIPTION} ****",
+            "; * USES : ${2: like CX , DX, SI, AL, AH}",
+            "; * PARAMS : ${0: Param1 => Reg, Param2 => Reg, ...}",
+            "; ************************************************"
+        ]
     }
 }
