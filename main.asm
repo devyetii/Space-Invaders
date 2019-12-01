@@ -2,95 +2,136 @@
 INCLUDE ship.inc
 INCLUDE bullet.inc
 INCLUDE refl.inc
+INCLUDE name.inc
 INCLUDE lib.inc
+
+
 	.MODEL SMALL
+	.386
         .STACK 64
         .DATA 
+;name page
+;****************************************************
+		playership1 db 15 dup('$'),'$' ; NAME OF PLAYER SHIP 1
+		playership2 DB 15 DUP('$'),'$' ; NAME OF PLAYER SHIP 2
+		MES         DB 'Press enter to continue $','$'
+		MESSHIP1    DB 'Please Enter the name of the left ship player $','$'
+		MESSHIP2    DB 'Please Enter the name of the rigth ship player $','$'
+		SCN         DB 1  ; TO DETERMINE NAME PAGE TO PLAYER SHIP 1 '1'OR SHIP 2 '2'
+		word_color equ 0fh	
 ; Printing Strings
 ;****************************************************
-st0 db "to end game click f4 & TO PAUSE F1 $"
-st1 db "To Start Chatting Press F1",10,13,10,13,"       To Start Playing Game Press F2",10,13,10,13,"       To End The Programe Press Esc",10,13,10,13,'$'
-st2 db "press Enter to back to main menu",10,13,10,13,'$'
-st3 db "screen for chatting ",10,13,10,13,'$'
-st4 db "screen for playing ",10,13,10,13,'$'
-st5 db "screen for Exiting ",10,13,10,13,'$'
+		st0 db "to end game click f4 & TO PAUSE F1 $"
+		st1 db "To Start Chatting Press F1",10,13,10,13,"       To Start Playing Game Press F2",10,13,10,13,"       To End The Programe Press Esc",10,13,10,13,'$'
+		st2 db "press Enter to back to main menu",10,13,10,13,'$'
+		st3 db "screen for chatting ",10,13,10,13,'$'
+		st4 db "screen for playing ",10,13,10,13,'$'
+		st5 db "screen for Exiting ",10,13,10,13,'$'
+		window_winner db "***  The Winner is  *** ",10,13,10,13,'$'
+		equal_window db "***  no one  ****",'$'
 
 ; Printing and Drawing variables
 ;*****************************************************
-BGCOLOR         EQU 0H   ; background color
-REFLECTORCOLOR  EQU 56H  ; reflector color
-SHIP1COLOR      EQU 33H  ; ship 1 color
-SHIP2COLOR      EQU 33H  ; ship 1 color
-BOARDSCOLOR     EQU 043H ; boards color
-BOARDERTHICK    EQU  2   ; boards thickness
-BOARDER1FY      EQU 145  ; frist boarder y
-BOARDER1FX      EQU  0   ; boards frist x
-BOARDER1EX      EQU 640  ; boards end x
-REFLECTORlen    EQU  60  ;reflector length
-ShipSizep1y     EQU  30  ; part 1 in ship length
-ShipSizep2Y     EQU  8   ; part 2 in ship length
-PLAYER_SC_pY    EQU 13H  ;player score position y
-PLAYER1_SC_pX   EQU 01H  ;player 1 score position x
-PLAYER2_SC_pX   EQU 14H  ;player 2 score position y
-PLAYER1_msg_py  EQU 15H  ;player 1 message position y
-PLAYER2_msg_py  EQU 18H  ;player 2 message position y
-
+		BGCOLOR         EQU 0H   ; background color
+		REFLECTORCOLOR  EQU 56H  ; reflector color
+		SHIP1COLOR      EQU 33H  ; ship 1 color
+		SHIP2COLOR      EQU 33H  ; ship 1 color
+		BOARDSCOLOR     EQU 043H ; boards color
+		BOARDERTHICK    EQU  2   ; boards thickness
+		BOARDER1FY      EQU 145  ; frist boarder y
+		BOARDER1FX      EQU  0   ; boards frist x
+		BOARDER1EX      EQU 640  ; boards end x
+		REFLECTORlen    EQU  60  ;reflector length
+		ShipSizep1y     EQU  30  ; part 1 in ship length
+		ShipSizep2Y     EQU  8   ; part 2 in ship length
+		PLAYER_SC_pY    EQU 13H  ;player score position y
+		PLAYER1_SC_pX   EQU 01H  ;player 1 score position x
+		PLAYER2_SC_pX   EQU 14H  ;player 2 score position y
+		PLAYER1_msg_py  EQU 15H  ;player 1 message position y
+		PLAYER2_msg_py  EQU 18H  ;player 2 message position y
+		helthfy         equ 151
+		helthlen        equ 8
+		helthsh1fx      dw 99 ,104,109,114,119,124,129,134,139,144
+		helthsh1ex      dw 102,107,112,117,122,127,132,137,142,147
+		helthcolor      equ 04h
+		helthsh2fx      dw  249,254,259,264,269,274,279,284,289,294  
+		helthsh2Ex		dw  252,257,262,267,272,277,282,287,292,297
 ; Player 1 Variables
 ;****************************************************
-sh1health   DB 100D    
-sh1p1fy   DW 1
-sh1p2fy   DW 12
-sh1p1fx   EQU 5
-sh1p1ENDx equ 15
-sh1p2fx   EQU 16
-sh1p2ENDx equ 21
-player1_h_str db   'P1 health: 100$'
-player1_ms db   'Player1: $'
-p1_bulls   db   0       ; No of bullets fired
+		sh1health   Dw 10    
+		sh1p1fy   DW 1
+		sh1p2fy   DW 12
+		sh1p1fx   EQU 5
+		sh1p1ENDx equ 15
+		sh1p2fx   EQU 16
+		sh1p2ENDx equ 21
+		p1_bulls   db   0       ; No of bullets fired
 
-; Player 2 Variables
-;****************************************************
-sh2health   DB 100D    
-sh2p1fy   DW   1
-sh2p2fy   DW   16
-sh2p1fx   EQU 300
-sh2p1ENDx equ 310
-sh2p2fx   EQU 294
-sh2p2ENDx equ 299
-player2_h_str db   'P2 health: 100$'
-player2_ms db   'Player2: $'
-p2_bulls   db   0       ; No of bullets fired
+		; Player 2 Variables
+		;****************************************************
+		sh2health   Dw 10   
+		sh2p1fy   DW   1
+		sh2p2fy   DW   16
+		sh2p1fx   EQU 300
+		sh2p1ENDx equ 310
+		sh2p2fx   EQU 294
+		sh2p2ENDx equ 299
+		p2_bulls   db   0       ; No of bullets fired
 
 ; Reflector Variables
 ;****************************************************
-REFfristY DW    1
-REFfristX EQU  151
-REFendX   EQU  156 
-REFflag   db    01             ; it take one or two  to detrmine if it move down "if 1" or move up "if 0"
-REFSPEED  EQU   0fffh          ;It is the counter when equal zero the reflector step & it control speed of reflector
-REFCTR    dw    0fffh
+		REFfristY DW    1
+		REFfristX EQU  151
+		REFendX   EQU  156 
+		REFflag   db    01             ; it take one or two  to detrmine if it move down "if 1" or move up "if 0"
+		REFSPEED  EQU   0fffh          ;It is the counter when equal zero the reflector step & it control speed of reflector
+		REFCTR    dw    0fffh
 
 ; Bullets Variables
 ;****************************************************
-buW     equ     20      ; Bullet width. No need to keep its height, just 3.
+		buW     equ     20      ; Bullet width. No need to keep its height, just 3.
 ; All Bullets Positions Array, Each bullet is represented by 2 words
 ; LSW => stores X of the top-left px.
 ; MSW => stores Y of the top-left px. in the first byte, and type of the bullet in the MSB
 ; Type of bullet is 0 for left-to-right bullet and 1 for right-to-left
-bullPoses   dw  100 dup(0FFFFH), 0FEFEH 
-bullRPwr    db  5
-bullLPwr    db  5
-bullLSpeed  EQU  00FFH   ; Speed of left-to-right bullets in gameloop units
-bullLCtr    dw   00FFH   ; Speed of left-to-right bullets in gameloop units
-bullRSpeed  EQU  0AFFH   ; Speed of right-to-left bullets in gameloop units
-bullRCtr    dw  0AFFH   ; Speed of right-to-left bullets in gameloop units
+		bullPoses   dw  100 dup(0FFFFH), 0FEFEH 
+		bullRPwr    db  5
+		bullLPwr    db  5
+		bullLSpeed  EQU  00FFH   ; Speed of left-to-right bullets in gameloop units
+		bullLCtr    dw   00FFH   ; Speed of left-to-right bullets in gameloop units
+		bullRSpeed  EQU  0AFFH   ; Speed of right-to-left bullets in gameloop units
+		bullRCtr    dw  0AFFH   ; Speed of right-to-left bullets in gameloop units
+;******************************************************
+; the health packet when the player tack he will tack one health
+;left 
+		HBL_color equ 04h
+		HBL_fx    equ 7 ; FRIST X
+		HBL_ex    equ 12 ; END X
+		HBL_fy    dw  8 ;; FRIST Y
+		HBL_MCA   equ 0ffffh  ; THE MAIN VALUE OF HBL_CA
+		HBL_CA    dw  0ffffh ; WHEN HBL_CA &HBL_CANUM =0 health packet LEFT
+		HBL_CANUM dw 0Fh     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME 
+		HBL_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
+		HBL_CDA    dw  0h  ;NUM IT STILL APEAR
+		HBL_yCH    equ 7   ; THE CHANG IN Y 
+		HBL_MAXY   equ 137 ; THE MAX Y POSSIBL
+;*******************************************************
+;buffer to take name
+		MyBuffer LABEL BYTE ; TO READ IN 
+		BufferSize db 40
+		ActualSize db ?
+		BufferData db 40 dup('$')	
 
-        .CODE
+   .CODE
 MAIN	PROC	FAR
 
         MOV	AX,@DATA
         MOV	DS,AX
-
+        ;**********************; TO USE STRING OPERATION
+		mov AX,DS   
+        mov ES,AX 
+		;***********************
+		  name_page
         ; But DI at the first element of the bullets array
         MOV DI,offset bullPoses
         ; Changes to the mode 
@@ -128,7 +169,7 @@ MAIN	ENDP
 
 
 ; Procedures
-;************************************************************
+;***********************************************************
 SHOW_MAIN_MENU  PROC
     PREP_BACKBROUND BGCOLOR ; TO PREPARE BACKGROUD COLOR & QUALITIES
     MOVE_CURSOR 7H,7H,0 ;to write in the middle of screen
@@ -161,9 +202,22 @@ SHOW_GAME PROC
         CALL DRWINFO
         CALL DRWREFL
         CALL DRWSHIPS
+		 call drawhelthsh1
+		call drawhelthsh2
+		
 GM_LP:
+		
         ; Moving Reflector and bullets
         ; Moving Reflector
+		;call drawhelth
+		
+		cmp HBL_CDA,0
+		jnz labhd1
+			dec_HBAL
+			jmp continue1
+		labhd1:
+			dec_HBDAL
+		continue1:
         CMP REFCTR,0
         JE  MVREFL_LB 
 CHK_BULL:
@@ -190,6 +244,28 @@ USER_INP:
         ; Handle Pause and stop clicks
         COMPARE_KEY 03EH        ; Scan code for f4
         JNE CHK_PAUSE
+		DETERMINE_MODE 00,00
+		PREP_BACKBROUND 0fh
+        MOVE_CURSOR  07,07,0
+		PRINTMESSAGE window_winner
+		MOVE_CURSOR  0fh,09,0
+		mov ax,sh2health
+		CMP sh1health,ax
+		ja labt1
+		je labt2
+		jb labt3
+		labt1:
+		PRINTMESSAGE playership1
+		jmp endtlab
+		labt2:
+		PRINTMESSAGE equal_window
+		jmp endtlab
+		labt3:
+		PRINTMESSAGE playership2
+		jmp endtlab
+		endtlab:
+		DELAY
+		;HALT  ; should be stop 5 sec then go MAIN  main menu 
         RET                     ; Ends the game if f4 is clicked
 CHK_PAUSE:
         COMPARE_KEY 03BH        ; Scan code of f1
@@ -227,21 +303,97 @@ DRWINFO PROC
         drow_thick_line BOARDER1FX,BOARDER1EX ,BOARDER1FY,BOARDERTHICK,BOARDSCOLOR  ; "dROW_THICK_line" IS MACRO TO DRAW UPPER BOARD
 	drow_thick_line BOARDER1FX,BOARDER1EX,BOARDER1FY+15,BOARDERTHICK,BOARDSCOLOR  ; "dROW_THICK_line" IS MACRO TO DRAW MIDLE BOARD
 	drow_thick_line BOARDER1FX,BOARDER1EX ,BOARDER1FY+32,BOARDERTHICK,BOARDSCOLOR  ; "dROW_THICK_line" IS MACRO TO DRAW down BOARD
-        ; Printing Strings
+	
+	
+	   ; Printing Strings
         MOVE_CURSOR  PLAYER1_SC_pX,PLAYER_SC_pY,0
-        PRINTMESSAGE player1_h_str
+        PRINTMESSAGE playership1
         MOVE_CURSOR  PLAYER2_SC_pX,PLAYER_SC_pY,0
-        PRINTMESSAGE player2_h_str
+        PRINTMESSAGE playership2
         ; Draw Chat Area
         MOVE_CURSOR  PLAYER1_SC_pX,PLAYER1_msg_py,0
-        PRINTMESSAGE player1_ms
+        PRINTMESSAGE playership1
         MOVE_CURSOR  PLAYER1_SC_pX,PLAYER2_msg_py-1,0
-        PRINTMESSAGE player2_ms
+        PRINTMESSAGE playership2
         MOVE_CURSOR  PLAYER1_SC_pX,PLAYER2_msg_py,0
         ; Draw End game statment
         PRINTMESSAGE st0
         RET
 DRWINFO ENDP
+;******************************************
+;****DRAW heath 
+;*****************************************
+drawhelthsh1 proc
+	push cx
+	push si
+	push di
+	mov cx,0
+	mov si,offset helthsh1fx
+	mov di,offset helthsh1ex
+	
+	labh2:
+	push cx
+	drow_thick_line [si],[di] ,helthfy,helthlen,BGCOLOR
+	add di,2
+	add si,2
+	pop cx
+	inc cx
+	cmp cx,10
+	jnz labh2
+	mov cx,0
+	mov si,offset helthsh1fx
+	mov di,offset helthsh1ex
+	labh1:
+	push cx
+	drow_thick_line [si],[di] ,helthfy,helthlen,helthcolor
+	add di,2
+	add si,2
+	pop cx
+	inc cx
+	cmp cx,sh1health
+	jnz labh1
+	
+	pop di
+	pop si 
+	pop cx
+	ret
+drawhelthsh1 endp
+;************************************************
+drawhelthsh2 proc
+	push cx
+	push si
+	push di
+	mov cx,0
+	mov si,offset helthsh2fx
+	mov di,offset helthsh2ex
+	
+	labh3:
+	push cx
+	drow_thick_line [si],[di] ,helthfy,helthlen,BGCOLOR
+	add di,2
+	add si,2
+	pop cx
+	inc cx
+	cmp cx,10
+	jnz labh3
+	mov cx,0
+	mov si,offset helthsh2fx
+	mov di,offset helthsh2ex
+	labh4:
+	push cx
+	drow_thick_line [si],[di] ,helthfy,helthlen,helthcolor
+	add di,2
+	add si,2
+	pop cx
+	inc cx
+	cmp cx,sh2health
+	jnz labh4
+	
+	pop di
+	pop si 
+	pop cx
+	ret
+drawhelthsh2 endp
 
 ;*************************************************
 ; **** GAMECHAT - Function for in-game chatting ****
@@ -562,15 +714,26 @@ INVBUL  ENDP
 ; * PARAMS :  NONE
 ; ************************************************
 DECP1HEALTH PROC
-        CMP sh1health, 0
-        JLE PLAYER2_WINS        ; Because the signed value of the health can be negative so we need signed comparison
+        CMP sh1health, 1
+        JlE PLAYER2_WINS        ; Because the signed value of the health can be negative so we need signed comparison
         MOV AX,sh1health
         SUB AX,bullRPwr
+		pusha
+		dec sh1health
+		call drawhelthsh1
+		popa
         JMP OUT_DECH1_LB
+		
         ; TODO: Redraw the number
-PLAYER2_WINS:
-        ; TODO: Handle winning situation
-         
+PLAYER2_WINS: ; winner 
+        DETERMINE_MODE 00,00
+		PREP_BACKBROUND 0fh
+        MOVE_CURSOR  07,07,0
+		PRINTMESSAGE window_winner
+		MOVE_CURSOR  0fh,09,0
+		PRINTMESSAGE playership2
+		DELAY
+		HALT  ; should be stop 5 sec then go main menu
 OUT_DECH1_LB:        
         RET
 DECP1HEALTH ENDP
@@ -581,14 +744,24 @@ DECP1HEALTH ENDP
 ; * PARAMS :  NONE
 ; ************************************************
 DECP2HEALTH PROC
-        CMP sh2health, 0
-        JLE PLAYER1_WINS        ; Because the signed value of the health can be negative so we need signed comparison
+        CMP sh2health, 1
+        JlE PLAYER1_WINS        ; Because the signed value of the health can be negative so we need signed comparison
         MOV AX,sh2health
         SUB AX,bullLPwr
+		pusha
+		dec sh2health
+		call drawhelthsh2
+		popa
         JMP OUT_DECH2_LB
-        ; TODO: Redraw the number
 PLAYER1_WINS:
-        ; TODO: Handle winning situation 
+		DETERMINE_MODE 00,00
+		PREP_BACKBROUND 0fh
+        MOVE_CURSOR  07,07,0
+		PRINTMESSAGE window_winner
+		MOVE_CURSOR  0fh,09,0
+		PRINTMESSAGE playership1
+		DELAY
+		HALT  ; should be stop 5 sec then go main menu
 OUT_DECH2_LB:        
         RET
 DECP2HEALTH ENDP

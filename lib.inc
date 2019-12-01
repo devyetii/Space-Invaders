@@ -105,14 +105,16 @@ ENDM DRWPX
 
 ;DELAY
 DELAY MACRO
-        LOCAL LP_OUT
-        LOCAL LP_IN
-        MOV DX,0AH
-LP_OUT: MOV CX,0FFFH
-        LP_IN: 
-            LOOP LP_IN
-        DEC DX
-        JNZ LP_OUT
+		LOCAL LABELD1
+       mov bh,05h ; sec num
+		mov ah,2ch
+		int 21h
+		mov [di],dh
+		labeld1:
+			int 21h
+			sub dh,[di]
+			cmp dh,bh
+		jb labeld1
 ENDM DELAY
 
 ; CALL_PROC_IF_EQUAL - Calls a certain procedure if the ZF is set
@@ -214,3 +216,71 @@ HALT MACRO
         MOV AH,4CH
         INT 21H
 ENDM HALT
+
+read macro 
+
+		mov ah,0AH        ;Read from keyboard
+		mov dx,MyBuffer               
+		int 21h
+		
+endm read
+
+cursor_on macro  ; TO SHOW CURSOR
+	   mov  ah, 1
+	   mov  cx, 4         ;?¦¦ BIG CURSOR.
+	   int  10h
+endm	cursor_on 
+
+dec_HBAL macro 
+		local enddec_HBA
+		local dec_2
+		local dec_3
+		local drow_BHL
+		PUSHA
+		PUSH DI
+		PUSH SI
+		
+		cmp HBL_CA,0
+		jz dec_2
+		dec HBL_CA
+		jmp enddec_HBA
+		dec_2:
+			CMP HBL_CANUM,0
+			JZ drow_BHL
+			DEC HBL_CANUM
+			MOV HBL_CA,HBL_MCA
+			JMP enddec_HBA
+		drow_BHL:
+		drow_thick_line HBL_fx,HBL_Ex,HBL_fy,8,HBL_color
+		mov HBL_CDA,HBL_MCDA
+		
+		enddec_HBA:
+		POP SI
+		POP DI
+		POPA
+endm dec_HBAL
+
+
+dec_HBDAL macro 
+		local enddec_HBDA
+		local delete_BHL
+		
+		PUSHA
+		PUSH DI
+		PUSH SI
+		dec HBL_CDA
+		cmp HBL_CDA,0
+		jz delete_BHL
+		jmp enddec_HBdA
+		delete_BHL:
+		drow_thick_line HBL_fx,HBL_Ex,HBL_fy,8,bgcolor
+		mov HBL_CA,HBL_MCA
+		mov HBL_CANUM,0FFH
+		mov ax,HBL_fy
+		add ax,HBL_yCH
+		mov HBL_fy,ax
+		enddec_HBDA:
+		POP SI
+		POP DI
+		POPA
+endm dec_HBDAL
