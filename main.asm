@@ -1,3 +1,4 @@
+
 ; Including Macros Library
 INCLUDE ship.inc
 INCLUDE bullet.inc
@@ -35,8 +36,8 @@ INCLUDE lib.inc
 ;*****************************************************
 		BGCOLOR         EQU 0H   ; background color
 		REFLECTORCOLOR  EQU 56H  ; reflector color
-		SHIP1COLOR      EQU 33H  ; ship 1 color
-		SHIP2COLOR      EQU 33H  ; ship 1 color
+		SHIP1COLOR      DB 33H  ; ship 1 color
+		SHIP2COLOR      DB 33H  ; ship 1 color
 		BOARDSCOLOR     EQU 043H ; boards color
 		BOARDERTHICK    EQU  2   ; boards thickness
 		BOARDER1FY      EQU 145  ; frist boarder y
@@ -58,9 +59,11 @@ INCLUDE lib.inc
 		helthsh1ex      dw 102,107,112,117,122,127,132,137,142,147
 		helthcolor      equ 04h
 		helthsh2fx      dw  249,254,259,264,269,274,279,284,289,294  
-		helthsh2Ex	dw  252,257,262,267,272,277,282,287,292,297
+		helthsh2Ex		dw  252,257,262,267,272,277,282,287,292,297
 ; Player 1 Variables
 ;****************************************************
+		SH1PROTECT_FLAG DB 0
+		SH1TIMES_PROTECT   DB 0
 		sh1health   Dw 10    
 		sh1p1fy   DW 1
 		sh1p2fy   DW 12
@@ -70,22 +73,23 @@ INCLUDE lib.inc
 		sh1p2ENDx equ 21
 		p1_bulls   db   0       ; No of bullets fired
 		fl       db   00h 
-
+		Ship1_Speed dw 1
 		; Player 2 Variables
 		;****************************************************
+		SH2PROTECT_FLAG DB 0
+		SH2TIMES_PROTECT   DB 0
 		sh2health   Dw 10   
 		sh2p1fy   DW   1
-		sh2p2fy   DW   12
+		sh2p2fy   DW   16
 		sh2p1fx   EQU 300
 		sh2p1ENDx equ 310
 		sh2p2fx   EQU 294
 		sh2p2ENDx equ 299
 		p2_bulls   db   0       ; No of bullets fired
 		fr       db   00h
-                ; IsThereAWinner - boolean value to determine if there's a final winner or not
-                IsThereAWinner db 00H
-                ; Reflector Variables
-                ;****************************************************
+		Ship2_Speed dw 1
+; Reflector Variables
+;****************************************************
 		REFfristY DW    1
 		REFfristX EQU  151
 		REFendX   EQU  156 
@@ -114,7 +118,7 @@ INCLUDE lib.inc
 		HB_fy     dw  8 ;; FRIST Y
 		HB_CA     dw  0ffffh ; WHEN HB_CA &HB_CANUM =0 health packet LEFT
 		HB_CANUM  dw 00h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
-		HB_CDA    dw  0h  ;NUM IT STILL APEAR
+		HB_CDA    dw 555h  ;NUM IT STILL APEAR
 		HB_CDANUM dw  0h  ;NUM IT STILL APEAR
 		HB_ON     DB  0H   ; TO DETERMINE IF HEALTH BACKET ON OR OFF 
 		
@@ -123,18 +127,39 @@ INCLUDE lib.inc
 		HBR_ex     EQU 185 		; RIGTH SIDE END X
 		HBL_fx     EQU 70	 	; LEFT SIDE FRIST X
 		HBL_ex     EQU 75 		; LEFT SIDE END X
-		HB_MCANUM  equ 0fh     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		HB_MCANUM  equ 27h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
 		HB_MCDANUM equ 03h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
 		HB_color  equ 04h
 		HB_MCA    equ 0ffffh  ; THE MAIN VALUE OF HB_CA 
 		HB_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
 		HB_MAXY    EQU 137
 ;************************************************************
+;**************PROTECT SHIP FROM FIVE BULLETS 
+		BS_FLAG   DB  1          ; TO DETRMINE RIGTH '0' OR LEFT '1'
+		BS_fy     dw  8 ;; FRIST Y
+		BS_CA     dw  0ffffh ; WHEN BS_CA &BS_CANUM =0 health packet LEFT
+		BS_CANUM  dw 02h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		BS_CDA    dw  0FFFFh  ;NUM IT STILL APEAR
+		BS_CDANUM dw  0h  ;NUM IT STILL APEAR
+		BS_ON     DB  0H   ; TO DETERMINE IF HEALTH BACKET ON OR OFF 
+		
+		BS_LEN     EQU 8
+		BSR_fx     EQU 190 		; RIGTH SIDE FRIST X
+		BSR_ex     EQU 195 		; RIGTH SIDE END X
+		BSL_fx     EQU 70	 	; LEFT SIDE FRIST X
+		BSL_ex     EQU 75 		; LEFT SIDE END X
+		BS_MCANUM  equ 27h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		BS_MCDANUM equ 03h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		BS_color  equ 0Eh
+		BS_MCA    equ 0ffffh  ; THE MAIN VALUE OF BS_CA 
+		BS_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
+		BS_MAXY    EQU 137
+;************************************************************
 ;****the rock when touch the bullet  delete it 
 		R_FLAG   DB  0          ; TO DETRMINE RIGTH '0' OR LEFT '1'
 		R_fy     dw  59 ;; FRIST Y
 		R_CA     dw 0ffffh ; WHEN R_CA &R_CANUM =0 health packet LEFT
-		R_CANUM  dw 07h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		R_CANUM  dw 01h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
 		R_CDA    dw  0h  ;NUM IT STILL APEAR
 		R_CDANUM dw  0h  ;NUM IT STILL APEAR
 		R_ON     DB  0H   ; TO DETERMINE IF HEALTH BACKET ON OR OFF 
@@ -144,12 +169,67 @@ INCLUDE lib.inc
 		RR_ex     EQU 187 		; RIGTH SIDE END X
 		RL_fx     EQU 70	 	; LEFT SIDE FRIST X
 		RL_ex     EQU 77 		; LEFT SIDE END X
-		R_MCANUM  equ 03h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		R_MCANUM  equ 27h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
 		R_MCDANUM equ 03h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
 		R_color  equ 67h
 		R_MCA    equ 0ffffh  ; THE MAIN VALUE OF R_CA 
 		R_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
 		R_MAXY   EQU  110
+;*******************************************************
+;*******************************************************
+;second type:
+;******************************************************
+; the health packet when the player tack he will tack one health
+
+		Counter1_Speed dw 0ffffh
+		Counter2_Speed dw 0ffffh
+		S_FLAG   DB  1          ; TO DETRMINE RIGTH '0' OR LEFT '1'
+		S_fy     dw  100 ;; FRIST Y;chang
+		S_CA     dw  0ffffh ; WHEN HB_CA &HB_CANUM =0 health packet LEFT
+		S_CANUM  dw 03h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		S_CDA    dw  0h  ;NUM IT STILL APEAR
+	    S_CDANUM dw  0h  ;NUM IT STILL APEAR
+		S_ON     DB  0H   ; TO DETERMINE IF HEALTH BACKET ON OR OFF 
+		S_LEN     EQU 8
+		SR_fx     EQU 170 		; RIGTH SIDE FRIST X
+		SR_ex     EQU 175		; RIGTH SIDE END X
+		SL_fx     EQU 60	 	; LEFT SIDE FRIST X
+		SL_ex     EQU 65 		; LEFT SIDE END X
+		S_MCANUM  equ 27h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		S_MCDANUM equ 03h   ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		S_color  equ 86h     
+		S_MCA    equ 0ffffh  ; THE MAIN VALUE OF HB_CA 
+		S_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
+		S_MAXY   equ 137 ; THE MAX Y POSSIBL
+		fls1    dw 00h
+		
+;*******************************************************
+; IsThereAWinner - boolean value to determine if there's a final winner or not
+                IsThereAWinner db 00H
+                ; Reflector Variables
+ ;****************************************************
+;*************************************************************************
+;*********************Obstacle to Decrease Speed of ship****************************
+		D_FLAG   DB  1          ; TO DETRMINE RIGTH '0' OR LEFT '1'
+		D_fy     dw  20 ;FRIST Y
+		D_CA     dw  0ffffh ; WHEN D_CA &D_CANUM =0 health packet LEFT
+		D_CANUM  dw 02h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		D_CDA    dw  8h  ;NUM IT STILL APEAR
+		D_CDANUM dw  0Fh  ;NUM IT STILL APEAR
+		D_ON     DB  0H   ; TO DETERMINE IF HEALTH BACKET ON OR OFF 
+		D_LEN     EQU 8    ;length of health
+		DR_fx     EQU 176 		; RIGTH SIDE FRIST X
+		DR_ex     EQU 180 		; RIGTH SIDE END X
+		DL_fx     EQU 60	 	; LEFT SIDE FRIST X
+		DL_ex     EQU 65 		; LEFT SIDE END X
+		D_MCANUM  equ 027h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		D_MCDANUM equ 03h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		D_color  equ 01h
+		D_MCA    equ 0ffffh  ; THE MAIN VALUE OF D_CA 
+		D_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
+		D_MAXY    EQU 137
+;*******************************************************
+
 ;*******************************************************
 ;buffer to take name
 		MyBuffer LABEL BYTE ; TO READ IN 
@@ -230,6 +310,9 @@ SHOW_CHAT ENDP
 ; * PARAMS :  DI => *First_Empty_Byte
 ; ************************************************
 SHOW_GAME PROC
+		pusha
+		push di
+		push si
         ; Reseting all game variables in the memory
         CALL CLRMEMORY
         ; Drawing and preparing
@@ -242,15 +325,7 @@ SHOW_GAME PROC
 		
 GM_LP:
         ; Handling counters and drawing of Powerups
-        cmp HB_CDA,0
-        jnz labhd1
-        CMP  HB_CDANUM,0
-        jnz labhd1
-                dec_HBAL  HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON
-        jmp continue1
-        labhd1:
-                dec_HBDAL HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
-        continue1:
+        CALL POWER_UPS
 
         ; Moving Reflector and bullets
         ; Cheking for Moving the Reflector
@@ -269,6 +344,9 @@ EXIT_IF_F4:
         GETKEY
         COMPARE_KEY 03EH
         JNE EXIT_IF_F4
+		pop si
+		pop di
+		popa
         RET
         ; Decrementing speed counter
 DEC_CTRS_LB:
@@ -419,6 +497,67 @@ drawhelthsh2 proc
 drawhelthsh2 endp
 
 ;*******************************************************
+;*************************************************
+; **** DRWPOWERUPS - Draws Health Packet Power-ups of both ships ****
+; * USES :  like CX , DX, SI, AL, AH
+; * PARAMS :  Param1 => Reg, Param2 => Reg, ...
+; ************************************************
+POWER_UPS Proc
+	cmp D_CDA,0
+			jnz labhdD;Delete Health
+			CMP  D_CDANUM,0
+			jnz labhdD;Delete Health
+	; WHEN D_CA &D_CANUM =0 health packet LEFT---->"DRAW Health"		
+			dec_HBAL  D_CA ,D_CANUM,D_MCA,D_FLAG,DL_fx,DL_Ex,D_fy,D_LEN,D_color,DR_fx,DR_Ex,D_CDA,D_MCDA,D_CDANUM,D_MCDANUM, D_ON
+			jmp continue4
+	;Delete Health		
+labhdD:
+			dec_HBDAL D_CA ,D_CANUM,D_MCA,D_FLAG,DL_fx,DL_Ex,D_fy,D_LEN,D_color,DR_fx,DR_Ex,D_CDA,D_MCDA,D_CDANUM,D_MCDANUM, D_ON,D_MCANUM,D_MAXY 
+	;**************************************************************
+	;****************Increaes Speed************************
+continue4:
+		cmp s_CDA,0
+		jnz labhdS
+		CMP  s_CDANUM,0
+		jnz labhds
+			dec_HBAL  S_CA ,S_CANUM,S_MCA,S_FLAG,SL_fx,SL_Ex,S_fy,S_LEN,S_color,SR_fx,SR_Ex,S_CDA,S_MCDA,S_CDANUM,S_MCDANUM, S_ON
+		jmp continue3
+labhds:
+		dec_HBDAL S_CA,S_CANUM,S_MCA,S_FLAG,SL_fx,SL_Ex,S_fy,S_LEN,S_color,SR_fx,SR_Ex,S_CDA,S_MCDA,S_CDANUM,S_MCDANUM,S_ON,S_MCANUM,S_MAXY 
+
+continue3:		
+		cmp HB_CDA,0
+		jnz labhd1
+		CMP  HB_CDANUM,0
+		jnz labhd1
+			dec_HBAL  HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON
+		jmp continue2
+labhd1:
+			dec_HBDAL HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM,HB_MAXY 
+
+continue2:
+		cmp R_CDA,0
+		jnz labhd2
+		CMP  R_CDANUM,0
+		jnz labhd2
+			dec_HBAL  R_CA ,R_CANUM,R_MCA,R_FLAG,RL_fx,RL_Ex,R_fy,R_LEN,R_color,RR_fx,RR_Ex,R_CDA,R_MCDA,R_CDANUM,R_MCDANUM, R_ON
+		jmp continue1
+labhd2:
+		dec_HBDAL R_CA ,R_CANUM,R_MCA,R_FLAG,RL_fx,RL_Ex,R_fy,R_LEN,R_color,RR_fx,RR_Ex,R_CDA,R_MCDA,R_CDANUM,R_MCDANUM, R_ON,R_MCANUM,R_MAXY 
+		
+continue1:
+        cmp BS_CDA,0
+		jnz labhd3
+		CMP  BS_CDANUM,0		
+		jnz labhd3
+			dec_HBAL  BS_CA ,BS_CANUM,BS_MCA,BS_FLAG,BSL_fx,BSL_Ex,BS_fy,BS_LEN,BS_coloR,BSR_fx,BSR_Ex,BS_CDA,BS_MCDA,BS_CDANUM,BS_MCDANUM, BS_ON
+		jmp continue0
+labhd3:
+		Dec_HBDAL BS_CA ,BS_CANUM,BS_MCA,BS_FLAG,BSL_fx,BSL_Ex,BS_fy,BS_LEN,BS_coloR,BSR_fx,BSR_Ex,BS_CDA,BS_MCDA,BS_CDANUM,BS_MCDANUM, BS_ON,BS_MCANUM,BS_MAXY 
+		
+continue0:
+	RET
+POWER_UPS ENDP
 ;*******************************************************
 ;               Game Helper functions
 ;*******************************************************
@@ -572,12 +711,161 @@ BULL_CHECK_OTHERS:
         ;*******************************************************
         ; TODO: HERE YOU CAN DETECT COLLISION IN OTHER OBJECTS
         ;*******************************************************
-        CMP HB_ON,0
-        JZ MOVE_BULLET_LEFT
-        CMP HB_FLAG,0
-        JZ BULL_CHECK_HELTHBACKETRIGHT
+BULL_CHECK_DELAY_SPEED1:
+		CMP D_ON,0
+		JZ BULL_CHECK_BS
+		CMP D_FLAG,0
+		JZ BULL_CHECK_HELTH_DELAY_RIGHT
+BULL_CHECK_HELTH_DELAY_LEFT:				
+		   MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,DL_fx
+        JNE BULL_CHECK_BS
+        MOV AX,D_fy
+        ADD AX,D_LEN
+        SUB AX,DX
+        CMP AX,D_LEN+3
+        JNC BULL_CHECK_BS
+        CALL DELAY_SPEED1
+        JMP DEL_BUL_LEFT
+BULL_CHECK_HELTH_DELAY_RIGHT:	
+		MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,DR_fx
+        JNE BULL_CHECK_BS
+        MOV AX,D_fy
+        ADD AX,D_LEN
+        SUB AX,DX
+        CMP AX,D_LEN+3
+        JNC BULL_CHECK_BS
+        CALL DELAY_SPEED1
+        JMP DEL_BUL_LEFT
+;*****************************************************************		
+BULL_CHECK_BS:
+		CMP BS_ON,0
+		JZ BULL_CHECK_Speed1
+		CMP BS_FLAG,0
+		JZ BULL_CHECK_HELTHBSRIGHT
+BULL_CHECK_HELTHBSLEFT:	
+			
+		MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,BSL_fx
+        JNE BULL_CHECK_Speed1
+        MOV AX,BS_fy
+        ADD AX,BS_LEN
+        SUB AX,DX
+        CMP AX,BS_LEN+3
+        JNC BULL_CHECK_Speed1
+		CALL INC_PROTECTBULLETLEFT
+        JMP DEL_BUL_LEFT
+BULL_CHECK_HELTHBSRIGHT:	
+		MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,BSR_fx
+        JNE BULL_CHECK_Speed1
+        MOV AX,BS_fy
+        ADD AX,BS_LEN
+        SUB AX,DX
+        CMP AX,BS_LEN+3
+        JNC BULL_CHECK_Speed1
+        CALL INC_PROTECTBULLETLEFT
+        JMP DEL_BUL_LEFT
+			
+BULL_CHECK_Speed1:
+		CMP S_ON,0
+		JZ BULL_CHECK_Rocket
+		CMP S_FLAG,0
+		JZ BULL_CHECK_HELTH_SPEED_RIGHT
+BULL_CHECK_HELTH_SPEED_LEFT:				
+		   MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,SL_fx
+        JNE BULL_CHECK_Rocket
+        MOV AX,S_fy
+        ADD AX,S_LEN
+        SUB AX,DX
+        CMP AX,S_LEN+3
+        JNC BULL_CHECK_Rocket
+        CALL Speed_UP_Sh1_Health
+        JMP DEL_BUL_LEFT
+BULL_CHECK_HELTH_SPEED_RIGHT:	
+		   MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,SR_fx
+        JNE BULL_CHECK_Rocket
+        MOV AX,S_fy
+        ADD AX,S_LEN
+        SUB AX,DX
+        CMP AX,S_LEN+3
+        JNC BULL_CHECK_Rocket
+        CALL Speed_UP_Sh1_Health
+        JMP DEL_BUL_LEFT
+
+
+
+;**********************************************************************
+BULL_CHECK_Rocket:
+		CMP R_ON,0
+		JZ BULL_CHECK_HB
+		CMP R_FLAG,0
+		JZ BULL_CHECK_HELTHROCKRIGHT
+BULL_CHECK_HELTROCKLEFT:	
+			
+		MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,RL_fx
+        JNE BULL_CHECK_HB
+        MOV AX,R_fy
+        ADD AX,R_LEN
+        SUB AX,DX
+        CMP AX,R_LEN+3
+        JNC BULL_CHECK_HB
+        PUSHA
+		PUSH DI
+		PUSH SI
+		MOV	R_CDANUM,AX
+		DELETEH_HB R_CA ,R_CANUM,R_MCA,R_FLAG,RL_fx,RL_Ex,R_fy,R_LEN,R_color,RR_fx,RR_Ex,R_CDA,R_MCDA,R_CDANUM,R_MCDANUM, R_ON,R_MCANUM,R_MAXY
+		POP SI
+		POP DI
+		POPA
+        JMP DEL_BUL_LEFT
+BULL_CHECK_HELTHROCKRIGHT:	
+		MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,RR_fx
+        JNE BULL_CHECK_HB
+        MOV AX,R_fy
+        ADD AX,R_LEN
+        SUB AX,DX
+        CMP AX,R_LEN+3
+        JNC BULL_CHECK_HB
+        PUSHA
+		PUSH DI
+		PUSH SI
+		MOV	R_CDANUM,AX
+		DELETEH_HB R_CA ,R_CANUM,R_MCA,R_FLAG,RL_fx,RL_Ex,R_fy,R_LEN,R_color,RR_fx,RR_Ex,R_CDA,R_MCDA,R_CDANUM,R_MCDANUM, R_ON,R_MCANUM,R_MAXY
+		POP SI
+		POP DI
+		POPA
+        JMP DEL_BUL_LEFT
+	;*********************************************************************	
+BULL_CHECK_HB:
+		CMP HB_ON,0
+		JZ MOVE_BULLET_LEFT
+		CMP HB_FLAG,0
+		JZ BULL_CHECK_HELTHBACKETRIGHT
 BULL_CHECK_HELTHBACKETLEFT:	
-	MOV AX,CX
+			
+		MOV AX,CX
         ADD AX,buW
         INC AX
         CMP AX,HBL_fx
@@ -590,7 +878,7 @@ BULL_CHECK_HELTHBACKETLEFT:
         CALL INCSH1HEALTH
         JMP DEL_BUL_LEFT
 BULL_CHECK_HELTHBACKETRIGHT:	
-	MOV AX,CX
+		MOV AX,CX
         ADD AX,buW
         INC AX
         CMP AX,HBR_fx
@@ -602,7 +890,6 @@ BULL_CHECK_HELTHBACKETRIGHT:
         JNC MOVE_BULLET_LEFT
         CALL INCSH1HEALTH
         JMP DEL_BUL_LEFT
-
         ; Call MVBULL, it moves the left bullet and stores the new position in [SI]
 MOVE_BULLET_LEFT:
 		CALL MVBULL
@@ -656,13 +943,153 @@ BULR_CHECK_OTHERS:
         ;*******************************************************
         ; TODO: HERE YOU CAN DETECT COLLISION IN OTHER OBJECTS
         ;*******************************************************
-        CMP HB_ON,0
-        JZ MOVE_BULLET_RIGHT
-        CMP HB_FLAG,0
-        JZ BULR_CHECK_HELTHBACKETRIGHT
+;************************************************************
+		CMP D_ON,0
+		JZ  BULR_CHECK_BS
+		CMP D_FLAG,0
+		JZ BULL_CHECK_HELTH_DELAY_RIGHT2
+BULL_CHECK_HELTH_DELAY_LEFT2:				
+		   MOV AX,CX
+        dec ax
+        CMP AX,DL_Ex
+        JNE  BULR_CHECK_BS
+        MOV AX,D_fy
+        ADD AX,D_LEN
+        SUB AX,DX
+        CMP AX,D_LEN+3
+        JNC  BULR_CHECK_BS
+        CALL DELAY_SPEED2
+        JMP DEL_BUL_LEFT
+BULL_CHECK_HELTH_DELAY_RIGHT2:	
+		MOV AX,CX
+        dec ax
+        CMP AX,DR_Ex
+        JNE  BULR_CHECK_BS
+        MOV AX,D_fy
+        ADD AX,D_LEN
+        SUB AX,DX
+        CMP AX,D_LEN+3
+        JNC  BULR_CHECK_BS
+        CALL DELAY_SPEED2
+        JMP DEL_BUL_LEFT		
+;****************************************************
+ BULR_CHECK_BS:
+		CMP BS_ON,0
+		JZ BULR_CHECK_Speed2
+		CMP BS_FLAG,0
+		JZ BULR_CHECK_HELTHBSRIGHT
+BULR_CHECK_HELTHBSLEFT:	
+			
+		MOV AX,CX
+       
+        DEC AX
+        CMP AX,BSL_Ex
+        JNE BULR_CHECK_Speed2
+        MOV AX,BS_fy
+        ADD AX,BS_LEN
+        SUB AX,DX
+        CMP AX,BS_LEN+3
+        JNC BULR_CHECK_Speed2
+		CALL INC_PROTECTBULLETRIGHT
+        JMP DEL_BUL_RIGHT
+		
+BULR_CHECK_HELTHBSRIGHT:	
+		MOV AX,CX
+       DEC AX
+        CMP AX,BSR_Ex
+        JNE BULR_CHECK_Speed2
+        MOV AX,BS_fy
+        ADD AX,BS_LEN
+        SUB AX,DX
+        CMP AX,BS_LEN+3
+        JNC BULR_CHECK_Speed2
+        CALL INC_PROTECTBULLETRIGHT
+        JMP DEL_BUL_RIGHT
+		
+BULR_CHECK_Speed2:
+		CMP S_ON,0
+		JZ BULL_CHECK_Rocket1
+		CMP S_FLAG,0
+		JZ BULL_CHECK_HELTH_SPEED_RIGHT1
+BULL_CHECK_HELTH_SPEED_LEFT1:				
+		MOV AX,CX
+        dec AX
+        CMP AX,SL_fx
+        JNE BULL_CHECK_Rocket1
+        MOV AX,S_fy
+        ADD AX,S_LEN
+        SUB AX,DX
+        CMP AX,S_LEN+3
+        JNC BULL_CHECK_Rocket1
+        CALL Speed_UP_Sh2_Health
+        JMP DEL_BUL_LEFT
+BULL_CHECK_HELTH_SPEED_RIGHT1:	
+		MOV AX,CX
+        dec AX
+        CMP AX,SR_fx
+        JNE BULL_CHECK_Rocket1
+        MOV AX,S_fy
+        ADD AX,S_LEN
+        SUB AX,DX
+        CMP AX,S_LEN+3
+        JNC BULL_CHECK_Rocket1
+        CALL Speed_UP_Sh2_Health
+        JMP DEL_BUL_LEFT
+;***********************************************************
+;******************************************************
+BULL_CHECK_Rocket1:
+		CMP R_ON,0
+		JZ BULR_CHECK_HELTHBACKET
+		CMP R_FLAG,0
+		JZ BULR_CHECK_HELTHROCKRIGHT
+BULR_CHECK_HELTHROCKLEFT:		
+		MOV AX,CX
+        DEC AX
+        CMP AX,RL_Ex
+        JNE BULR_CHECK_HELTHBACKET
+        MOV AX,R_fy
+        ADD AX,R_LEN
+        SUB AX,DX
+        CMP AX,R_LEN+3
+        JNC BULR_CHECK_HELTHBACKET
+        PUSHA
+		PUSH DI
+		PUSH SI
+		MOV	R_CDANUM,AX
+		DELETEH_HB R_CA ,R_CANUM,R_MCA,R_FLAG,RL_fx,RL_Ex,R_fy,R_LEN,R_color,RR_fx,RR_Ex,R_CDA,R_MCDA,R_CDANUM,R_MCDANUM, R_ON,R_MCANUM,R_MAXY
+		POP SI
+		POP DI
+		POPA
+        JMP DEL_BUL_RIGHT
+BULR_CHECK_HELTHROCKRIGHT:	
+		MOV AX,CX
+        DEC AX
+        CMP AX,RR_Ex
+        JNE BULR_CHECK_HELTHBACKET
+        MOV AX,R_fy
+        ADD AX,R_LEN
+        SUB AX,DX
+        CMP AX,R_LEN+3
+        JNC BULR_CHECK_HELTHBACKET
+        PUSHA
+		PUSH DI
+		PUSH SI
+		MOV	R_CDANUM,AX
+		DELETEH_HB R_CA ,R_CANUM,R_MCA,R_FLAG,RL_fx,RL_Ex,R_fy,R_LEN,R_color,RR_fx,RR_Ex,R_CDA,R_MCDA,R_CDANUM,R_MCDANUM, R_ON,R_MCANUM,R_MAXY
+		POP SI
+		POP DI
+		POPA
+        JMP DEL_BUL_RIGHT
+;********************************************************		
+BULR_CHECK_HELTHBACKET:
+		CMP HB_ON,0
+		JZ MOVE_BULLET_RIGHT
+		CMP HB_FLAG,0
+		JZ BULR_CHECK_HELTHBACKETRIGHT
 BULR_CHECK_HELTHBACKETLEFT:	
-        MOV AX,CX
-        ADD AX,buW
+			
+			
+		MOV AX,CX
         DEC AX
         CMP AX,HBL_Ex
         JNE MOVE_BULLET_RIGHT
@@ -674,7 +1101,7 @@ BULR_CHECK_HELTHBACKETLEFT:
         CALL INCSH2HEALTH
         JMP DEL_BUL_RIGHT
 BULR_CHECK_HELTHBACKETRIGHT:	
-	MOV AX,CX
+		MOV AX,CX
         ADD AX,buW
         DEC AX
         CMP AX,HBR_Ex
@@ -686,6 +1113,7 @@ BULR_CHECK_HELTHBACKETRIGHT:
         JNC MOVE_BULLET_RIGHT
         CALL INCSH2HEALTH
         JMP DEL_BUL_RIGHT
+		;*********************************************
 MOVE_BULLET_RIGHT:
         ; Call MVBULR, it moves the left bullet and stores the new position in [SI]
         CALL MVBULR
@@ -831,26 +1259,8 @@ INVBUL  PROC
         RET
 INVBUL  ENDP
 
-;*************************************************
-; **** DRWPOWERUPS - Draws Health Packet Power-ups of both ships ****
-; * USES :  like CX , DX, SI, AL, AH
-; * PARAMS :  Param1 => Reg, Param2 => Reg, ...
-; ************************************************
-; DRWPOWERUPS PROC
-; 		cmp HB_CDA,0
-; 		jnz labhd1
-; 		CMP  HB_CDANUM,0
-; 		jnz labhd1
-; 			dec_HBAL  HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON
-; 		jmp continue1
-; 		labhd1:
-; 			dec_HBDAL HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
-; 		continue1:
-;                 RET
-; DRWPOWERUPS ENDP
+;************************************************************************************************
 
-
-;*************************************************
 ; **** DECP1HEALTH - Decreases health of player1 and redraws the number + handles winning of P2****
 ; * USES :  AX, BX, CX, DX
 ; * PARAMS :  NONE
@@ -860,11 +1270,24 @@ DECP1HEALTH PROC
         JlE PLAYER2_WINS        ; Because the signed value of the health can be negative so we need signed comparison
         MOV AX,sh1health
         SUB AX,bullRPwr
-        pusha
-        dec sh1health
-        call drawhelthsh1
-        popa
+		pusha
+		CMP SH1PROTECT_FLAG,0
+		JZ LABDC1
+		DEC SH1TIMES_PROTECT
+		CMP SH1TIMES_PROTECT,0
+		JNZ EMDD
+		MOV SH1PROTECT_FLAG,0
+		MOV SHIP1COLOR,33H
+		CALL DRWSHIPS
+		JMP EMDD
+		LABDC1:
+		dec sh1health
+		call drawhelthsh1
+		EMDD:
+		popa
         JMP OUT_DECH1_LB
+		
+        ; TODO: Redraw the number
 PLAYER2_WINS: ; winner 
         MOV IsThereAWinner, 01H
 	PREP_BACKBROUND 00h
@@ -874,6 +1297,7 @@ PLAYER2_WINS: ; winner
         PRINTMESSAGE playership2
         PRINTMESSAGE st7
         DELAY
+       
 OUT_DECH1_LB:        
         RET
 DECP1HEALTH ENDP
@@ -889,12 +1313,23 @@ DECP2HEALTH PROC
         MOV AX,sh2health
         SUB AX,bullLPwr
 		pusha
+		CMP SH2PROTECT_FLAG,0
+		JZ LABDC21
+		DEC SH2TIMES_PROTECT
+		CMP SH2TIMES_PROTECT,0
+		JNZ EMDD2
+		MOV SH2PROTECT_FLAG,0
+		MOV SHIP2COLOR,33H
+		CALL DRWSHIPS
+		JMP EMDD2
+		LABDC21:
 		dec sh2health
 		call drawhelthsh2
+		EMDD2:
 		popa
         JMP OUT_DECH2_LB
 PLAYER1_WINS:
-        MOV IsThereAWinner, 01H
+		MOV IsThereAWinner, 01H
         PREP_BACKBROUND 00h
         MOVE_CURSOR  07,07,0
         PRINTMESSAGE window_winner
@@ -902,11 +1337,46 @@ PLAYER1_WINS:
         PRINTMESSAGE playership1
         PRINTMESSAGE st7
         DELAY
-OUT_DECH2_LB:        
+OUT_DECH2_LB:      
         RET
 DECP2HEALTH ENDP
 
+INC_PROTECTBULLETLEFT Proc
+	    PUSHA
+		PUSH DI
+		PUSH SI
+		MOV	BS_CDANUM,AX
+		DELETEH_HB BS_CA ,BS_CANUM,BS_MCA,BS_FLAG,BSL_fx,BSL_Ex,BS_fy,BS_LEN,BS_color,BSR_fx,BSR_Ex,BS_CDA,BS_MCDA,BS_CDANUM,BS_MCDANUM, BS_ON,BS_MCANUM,BS_MAXY
+		MOV SH1PROTECT_FLAG,1
+		
+		MOV SHIP1COLOR,BS_COLOR
+		CALL DRWSHIPS
+		MOV SH1TIMES_PROTECT,5
+		
+		POP SI
+		POP DI
+		POPA
+		RET
+INC_PROTECTBULLETLEFT ENDP
+
+INC_PROTECTBULLETRIGHT Proc
+	    PUSHA
+		PUSH DI
+		PUSH SI
+		MOV	BS_CDANUM,AX
+		DELETEH_HB BS_CA ,BS_CANUM,BS_MCA,BS_FLAG,BSL_fx,BSL_Ex,BS_fy,BS_LEN,BS_color,BSR_fx,BSR_Ex,BS_CDA,BS_MCDA,BS_CDANUM,BS_MCDANUM, BS_ON,BS_MCANUM,BS_MAXY
+		MOV SH2PROTECT_FLAG,1
+		MOV SHIP2COLOR,BS_COLOR
+		CALL DRWSHIPS
+		MOV SH2TIMES_PROTECT,5
+		POP SI
+		POP DI
+		POPA
+		RET
+INC_PROTECTBULLETRIGHT ENDP
+
 INCSH2HEALTH PROC 
+	
 	PUSHA
 	PUSH DI
 	PUSH SI
@@ -921,9 +1391,11 @@ INCSH2HEALTH PROC
 	POP DI
 	POPA
 	RET
+
 INCSH2HEALTH ENDP
 
 INCSH1HEALTH PROC 
+	
 	PUSHA
 	PUSH DI
 	PUSH SI
@@ -940,6 +1412,71 @@ INCSH1HEALTH PROC
 	RET
 
 INCSH1HEALTH ENDP
+;*****************************************************
+ Speed_UP_Sh1_Health Proc
+	 PUSHA
+	 PUSH DI
+	 PUSH SI
+	 
+	 MOV	S_CDANUM,AX
+	 DELETEH_HB S_CA,S_CANUM,S_MCA,S_FLAG,SL_fx,SL_Ex,S_fy,S_LEN,S_color,SR_fx,SR_Ex,S_CDA,S_MCDA,S_CDANUM,S_MCDANUM,S_ON,S_MCANUM,S_MAXY
+	 inc Ship1_Speed
+	 
+	
+	 POP SI
+	 POP DI
+	 POPA
+	 RET
+ Speed_UP_Sh1_Health ENDP
+;************************************
+
+;**********************************
+Speed_UP_Sh2_Health PROC
+	PUSHA
+	PUSH DI
+	PUSH SI
+	inc Ship2_Speed
+	MOV	S_CDANUM,AX
+	DELETEH_HB S_CA,S_CANUM,S_MCA,S_FLAG,SL_fx,SL_Ex,S_fy,S_LEN,S_color,SR_fx,SR_Ex,S_CDA,S_MCDA,S_CDANUM,S_MCDANUM,S_ON,S_MCANUM,S_MAXY
+	POP SI
+	POP DI
+	POPA
+	RET
+RET
+Speed_UP_Sh2_Health ENDP
+;***********************************************************************
+DELAY_SPEED1 Proc
+	PUSHA
+	PUSH DI
+	PUSH SI	 
+	MOV	D_CDANUM,AX
+	DELETEH_HB D_CA,D_CANUM,D_MCA,D_FLAG,DL_fx,DL_Ex,D_fy,D_LEN,D_color,DR_fx,DR_Ex,D_CDA,D_MCDA,D_CDANUM,D_MCDANUM,D_ON,D_MCANUM,D_MAXY
+cmp Ship1_Speed,1
+JBE exit_out
+dec Ship1_Speed
+exit_out:	
+	POP SI
+	POP DI
+	POPA	
+	RET
+DELAY_SPEED1 ENDP
+;**********************************************
+DELAY_SPEED2 Proc
+	PUSHA
+	PUSH DI
+	PUSH SI	 
+	MOV	D_CDANUM,AX
+	DELETEH_HB D_CA,D_CANUM,D_MCA,D_FLAG,DL_fx,DL_Ex,D_fy,D_LEN,D_color,DR_fx,DR_Ex,D_CDA,D_MCDA,D_CDANUM,D_MCDANUM,D_ON,D_MCANUM,D_MAXY
+cmp Ship2_Speed,1
+JBE exit_out1
+dec Ship2_Speed
+exit_out1:	
+	POP SI
+	POP DI
+	POPA	
+	RET
+DELAY_SPEED2 ENDP
+
 
 changeColor proc
 cmp fr,01h;flag for ship1 if bullet touch ship1
