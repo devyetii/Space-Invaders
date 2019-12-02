@@ -351,8 +351,7 @@ RANDOM0_1 MACRO
 		xor dx,dx            ; Compute randval(DX) mod 10 to get num
 		mov bx,10            ;     between 0 and 9
 		div bx               ; Divide dx:ax by bx
-		MOV BL,7						; DX = modulo from division ( 0 to 9)
+							; DX = modulo from division ( 0 to 9)
         MOV Ax,DX  
-		MUL BL
 		
 ENDM RANDOM0_1

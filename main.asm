@@ -146,7 +146,7 @@ INCLUDE lib.inc
 		R_color  equ 67h
 		R_MCA    equ 0ffffh  ; THE MAIN VALUE OF R_CA 
 		R_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
-		R_MAXY   EQU  130
+		R_MAXY   EQU  110
 ;*******************************************************
 ;buffer to take name
 		MyBuffer LABEL BYTE ; TO READ IN 
