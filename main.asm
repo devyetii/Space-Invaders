@@ -49,6 +49,8 @@ INCLUDE lib.inc
 		PLAYER2_SC_pX   EQU 14H  ;player 2 score position y
 		PLAYER1_msg_py  EQU 15H  ;player 1 message position y
 		PLAYER2_msg_py  EQU 18H  ;player 2 message position y
+		ship2Damage     EQU 44h  ; color to damage 
+		ship1Damage     EQU 44h  ;color to damage
 		helthfy         equ 151
 		helthlen        equ 8
 		helthsh1fx      dw 99 ,104,109,114,119,124,129,134,139,144
@@ -66,6 +68,7 @@ INCLUDE lib.inc
 		sh1p2fx   EQU 16
 		sh1p2ENDx equ 21
 		p1_bulls   db   0       ; No of bullets fired
+		fl       db   00h 
 
 		; Player 2 Variables
 		;****************************************************
@@ -77,7 +80,7 @@ INCLUDE lib.inc
 		sh2p2fx   EQU 294
 		sh2p2ENDx equ 299
 		p2_bulls   db   0       ; No of bullets fired
-
+		fr       db   00h
 ; Reflector Variables
 ;****************************************************
 		REFfristY DW    1
@@ -103,18 +106,29 @@ INCLUDE lib.inc
 		bullRCtr    dw  0AFFH   ; Speed of right-to-left bullets in gameloop units
 ;******************************************************
 ; the health packet when the player tack he will tack one health
-;left 
-		HBL_color equ 04h
-		HBL_fx    equ 7 ; FRIST X
-		HBL_ex    equ 12 ; END X
-		HBL_fy    dw  8 ;; FRIST Y
-		HBL_MCA   equ 0ffffh  ; THE MAIN VALUE OF HBL_CA
-		HBL_CA    dw  0ffffh ; WHEN HBL_CA &HBL_CANUM =0 health packet LEFT
-		HBL_CANUM dw 0Fh     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME 
-		HBL_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
-		HBL_CDA    dw  0h  ;NUM IT STILL APEAR
-		HBL_yCH    equ 7   ; THE CHANG IN Y 
-		HBL_MAXY   equ 137 ; THE MAX Y POSSIBL
+
+		HB_FLAG   DB  1          ; TO DETRMINE RIGTH '0' OR LEFT '1'
+		HB_fy     dw  8 ;; FRIST Y
+		HB_CA     dw  0ffffh ; WHEN HB_CA &HB_CANUM =0 health packet LEFT
+		HB_CANUM  dw 00h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		HB_CDA    dw  0h  ;NUM IT STILL APEAR
+		HB_CDANUM dw  0h  ;NUM IT STILL APEAR
+		HB_ON     DB  0H   ; TO DETERMINE IF HEALTH BACKET ON OR OFF 
+		
+		HB_LEN     EQU 8
+		HBR_fx     EQU 180 		; RIGTH SIDE FRIST X
+		HBR_ex     EQU 185 		; RIGTH SIDE END X
+		HBL_fx     EQU 70	 	; LEFT SIDE FRIST X
+		HBL_ex     EQU 75 		; LEFT SIDE END X
+		HB_MCANUM  equ 00h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		HB_MCDANUM equ 03h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		HB_color  equ 04h
+		HB_MCA    equ 0ffffh  ; THE MAIN VALUE OF HB_CA 
+		HB_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
+		;HB_yCH    equ 7   ; THE CHANG IN Y 
+		;HB_xCH    equ 10   ; THE CHANG IN x
+		HB_MAXY   equ 137 ; THE MAX Y POSSIBL
+		;HB_MAXx   equ 305 ; THE MAX x POSSIBL
 ;*******************************************************
 ;buffer to take name
 		MyBuffer LABEL BYTE ; TO READ IN 
@@ -131,7 +145,7 @@ MAIN	PROC	FAR
 		mov AX,DS   
         mov ES,AX 
 		;***********************
-		  name_page
+		name_page
         ; But DI at the first element of the bullets array
         MOV DI,offset bullPoses
         ; Changes to the mode 
@@ -211,12 +225,15 @@ GM_LP:
         ; Moving Reflector
 		;call drawhelth
 		
-		cmp HBL_CDA,0
+		cmp HB_CDA,0
 		jnz labhd1
-			dec_HBAL
-			jmp continue1
+		CMP  HB_CDANUM,0
+		jnz labhd1
+			dec_HBAL  HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON
+		jmp continue1
 		labhd1:
-			dec_HBDAL
+			dec_HBDAL HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
+			
 		continue1:
         CMP REFCTR,0
         JE  MVREFL_LB 
@@ -489,8 +506,9 @@ GO_BULLS_GO:
         MOV AX,sh2p1fy
         ADD AX,ShipSizep1y
         SUB AX,DX
-        CMP AX,ShipSizep1y
+        CMP AX,ShipSizep1y+3
         JNC BULL_CHECK_REFL
+		mov fl,01h
         CALL DECP2HEALTH
         JMP DEL_BUL_LEFT
 BULL_CHECK_REFL:
@@ -504,7 +522,7 @@ BULL_CHECK_REFL:
         MOV AX,REFfristY
         ADD AX,REFLECTORlen
         SUB AX,DX
-        CMP AX,REFLECTORlen
+        CMP AX,REFLECTORlen+3
         JNC BULL_CHECK_OTHERS
         JMP INV_BULL
 
@@ -512,9 +530,29 @@ BULL_CHECK_OTHERS:
         ;*******************************************************
         ; TODO: HERE YOU CAN DETECT COLLISION IN OTHER OBJECTS
         ;*******************************************************
+		CMP HB_ON,0
+		JZ MOVE_BULLET_LEFT
+		CMP HB_FLAG,0
+		JZ MOVE_BULLET_LEFT
+BULL_CHECK_HELTHBACKETLEFT:		
 
+		MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,HBL_fx
+        JNE MOVE_BULLET_LEFT
+        MOV AX,HB_fy
+        ADD AX,HB_LEN
+        SUB AX,DX
+        CMP AX,HB_fy+3
+        JNC MOVE_BULLET_LEFT
+        CALL INCSH1HEALTH
+		
+        JMP DEL_BUL_LEFT
+		
         ; Call MVBULL, it moves the left bullet and stores the new position in [SI]
-        CALL MVBULL
+MOVE_BULLET_LEFT:
+		CALL MVBULL
         JMP  END_BUL_LP
         
         ; Branch for left bullet deletion
@@ -543,8 +581,9 @@ R_MV:
         MOV AX,sh1p1fy
         ADD AX,ShipSizep1y
         SUB AX,DX
-        CMP AX,ShipSizep1y
+        CMP AX,ShipSizep1y+3
         JNC BULR_CHECK_REFL
+		mov fr,01h
         CALL DECP1HEALTH
         JMP DEL_BUL_RIGHT
 
@@ -556,7 +595,7 @@ BULR_CHECK_REFL:
         MOV AX,REFfristY
         ADD AX,REFLECTORlen
         SUB AX,DX
-        CMP AX,REFLECTORlen
+        CMP AX,REFLECTORlen+3
         JNC BULR_CHECK_OTHERS
         JMP INV_BULR
 
@@ -574,6 +613,7 @@ DEL_BUL_RIGHT:
         DEC p2_bulls        
 DEL_BUL:
         CALL DELBUL
+		CALL changeColor
         JMP END_BUL_LP_WITHOUT_INC
         
         ;Increment SI by 4 to get a new bullet position
@@ -765,5 +805,81 @@ PLAYER1_WINS:
 OUT_DECH2_LB:        
         RET
 DECP2HEALTH ENDP
+
+INCSH1HEALTH PROC 
+	
+	PUSHA
+	PUSH DI
+	PUSH SI
+	dec sh2health
+	call drawhelthsh2
+	MOV AX,1
+	MOV HB_CDA ,1
+	MOV AX,0
+	MOV	HB_CDANUM,AX
+	DELETEH_HB HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
+	POP SI
+	POP DI
+	POPA
+	RET
+
+INCSH1HEALTH ENDP
+
+changeColor proc
+cmp fr,01h;flag for ship1 if bullet touch ship1
+je color_Right; if yes chang color of ship1
+jne check_color_Left;check for ship2
+color_Right:
+call changeColorRight
+check_color_Left:
+cmp fl,00h;flag if bullet touch screen 
+JE exit1;do nothing
+;else change color of ship2
+drow_thick_line  sh2p1fx,sh2p1ENDx,sh2p1fy,ShipSizep1y,ship2Damage; "dROW_THICK_line" IS MACRO TO DRAW SHIP 2 PART 1
+drow_thick_line  sh2p2fx,sh2p2ENDx,sh2p2fy,ShipSizep2y,ship2Damage  ; "dROW_THICK_line" IS MACRO TO DRAW SHIP 2 PART 2
+jmp continue ; to avoide out of range
+;******************
+exit1:
+jmp exit;to avoide out of range
+;***************
+continue:
+push ax; to save it's value ,if it used in other function before 
+mov ax,0ffffh;time of change color of ship
+Time_loop_Continue:
+ cmp ax,0
+ dec ax
+ jz Time_loop_End
+ jnz Time_loop_Continue
+Time_loop_End:
+pop ax
+;Returne color of ship 
+drow_thick_line  sh2p1fx,sh2p1ENDx,sh2p1fy,ShipSizep1y,ship2color  ; "dROW_THICK_line" IS MACRO TO DR
+drow_thick_line  sh2p2fx,sh2p2ENDx,sh2p2fy,ShipSizep2y,ship2color  ; "dROW_THICK_line" IS MACRO TO DRA
+mov fl,00h;return default of flag value
+exit:
+ret
+changeColor endp
+;**************************************
+changeColorRight proc
+;change color of ship1
+drow_thick_line  sh1p1fx,sh1p1ENDx,sh1p1fy,ShipSizep1y,ship2Damage  ; "dROW_THICK_line" IS MACRO TO DRAW SHIP 1 PART 1
+drow_thick_line  sh1p2fx,sh1p2ENDx,sh1p2fy,ShipSizep2y,ship2Damage  ; "dROW_THICK_line" 
+;***************
+push ax
+mov ax,0ffffh;time of change color of ship
+Time_loop_Continue1:
+cmp ax,0
+dec ax
+jz Time_loop_End1
+jnz Time_loop_Continue1
+Time_loop_End1:
+pop ax
+;return color of ship1
+drow_thick_line  sh1p1fx,sh1p1ENDx,sh1p1fy,ShipSizep1y,ship1color  ; "dROW_THICK_line" IS MACRO TO DRAW SHIP 1 PART 1
+drow_thick_line  sh1p2fx,sh1p2ENDx,sh1p2fy,ShipSizep2y,ship1color  ; "dROW_THICK_line" 
+mov fr,00h;return default of flag value
+exit3:
+ret
+changeColorRight endp
 
 END	MAIN

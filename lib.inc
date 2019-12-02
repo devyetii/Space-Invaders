@@ -231,29 +231,42 @@ cursor_on macro  ; TO SHOW CURSOR
 	   int  10h
 endm	cursor_on 
 
-dec_HBAL macro 
+dec_HBAL macro HBA ,HBANUM,HBMCA,HBFLAG,HBLfx,HBLEx,HBfy,HBLEN,HBcolor,HBRfx,HBREx,HBCDA,HBMCDA,HBCDANUM,HBMCDANUM, HBON
 		local enddec_HBA
 		local dec_2
 		local dec_3
 		local drow_BHL
+		local drow_BHR
+		local drow_BH
+		LOCAL PREP
 		PUSHA
 		PUSH DI
 		PUSH SI
 		
-		cmp HBL_CA,0
+		cmp HBA,0
 		jz dec_2
-		dec HBL_CA
+		dec HBA
 		jmp enddec_HBA
 		dec_2:
-			CMP HBL_CANUM,0
-			JZ drow_BHL
-			DEC HBL_CANUM
-			MOV HBL_CA,HBL_MCA
+			CMP HBANUM,0
+			JZ drow_BH
+			DEC HBANUM
+			MOV HBA,HBMCA
 			JMP enddec_HBA
+		drow_BH:
+		 CMP HBFLAG  ,1
+		 JZ drow_BHL
+		 JNZ drow_BHR
 		drow_BHL:
-		drow_thick_line HBL_fx,HBL_Ex,HBL_fy,8,HBL_color
-		mov HBL_CDA,HBL_MCDA
+		drow_thick_line HBLfx,HBLEx,HBfy,HBLEN,HBcolor
+		JMP PREP
+		drow_BHR:
+		drow_thick_line HBRfx,HBREx,HBfy,HBLEN,HBcolor
 		
+		PREP:
+		mov HBCDA,HBMCDA
+		mov HBCDANUM,HBMCDANUM
+		MOV HBON,1
 		enddec_HBA:
 		POP SI
 		POP DI
@@ -261,26 +274,82 @@ dec_HBAL macro
 endm dec_HBAL
 
 
-dec_HBDAL macro 
+dec_HBDAL macro HBCA ,HBCANUM,HBMCA,HBFLAG,HBLfx,HBLEx,HBfy,HBLEN,HBcolor,HBRfx,HBREx,HBCDA,HBMCDA,HBCDANUM,HBMCDANUM, HBON,HBMCANUM
 		local enddec_HBDA
-		local delete_BHL
+		local delete_BH
+		local dec_num
 		
 		PUSHA
 		PUSH DI
 		PUSH SI
-		dec HBL_CDA
-		cmp HBL_CDA,0
-		jz delete_BHL
-		jmp enddec_HBdA
-		delete_BHL:
-		drow_thick_line HBL_fx,HBL_Ex,HBL_fy,8,bgcolor
-		mov HBL_CA,HBL_MCA
-		mov HBL_CANUM,0FFH
-		mov ax,HBL_fy
-		add ax,HBL_yCH
-		mov HBL_fy,ax
+		
+		dec HBCDA
+		cmp HBCDA,0
+		jz dec_NUM
+		jmp enddec_HBDA
+		dec_NUM:
+			CMP HBCDANUM,0
+			JZ delete_BH
+			DEC HBCDANUM
+			MOV HBCDA,HBMCDA
+			JMP enddec_HBDA
+			
+		deletE_BH:
+			DELETEH_HB HBCA ,HBCANUM,HBMCA,HBFLAG,HBLfx,HBLEx,HBfy,HBLEN,HBcolor,HBRfx,HBREx,HBCDA,HBMCDA,HBCDANUM,HBMCDANUM, HBON,HBMCANUM
+			
 		enddec_HBDA:
 		POP SI
 		POP DI
 		POPA
 endm dec_HBDAL
+
+DELETEH_HB MACRO  HBCA ,HBCANUM,HBMCA,HBFLAG,HBLfx,HBLEx,HBfy,HBLEN,HBcolor,HBRfx,HBREx,HBCDA,HBMCDA,HBCDANUM,HBMCDANUM, HBON,HBMCANUM
+				local delete_BHL
+				local delete_BHR
+				LOCAL PREPD
+				LOCAL  ENDDEC
+				LOCAL DO_ELSE
+		 CMP HBFLAG  ,1
+		 JZ dELETE_BHL
+		 JNZ dELETE_BHR
+		dELETE_BHL:
+		drow_thick_line HBLfx,HBLEx,HBfy,HBLEN,BGCOLOR
+		JMP PREPD
+		dELETE_BHR:
+		drow_thick_line HBRfx,HBREx,HBfy,HBLEN,BGCOLOR
+		
+		PREPD:
+		mov HBCA,HBMCA
+		mov HBCANUM,HBMCANUM
+		XOR AX,AX
+		MOV HBON ,AL
+		
+		mov HBCDA,AX
+		mov HBCDANUM,AX
+		
+		XOR byte ptr HBFLAG,00000001B
+		RANDOM0_1
+		MOV BX,HBfy
+		ADD BX,AX
+		CMP BX,137
+		JAE DO_ELSE
+		MOV HBFY,BX
+		JMP ENDDEC
+		DO_ELSE:
+			MOV HBFY,11H
+			 ENDDEC:
+ENDM DELETEH_HB
+
+RANDOM0_1 MACRO
+		xor ax,ax            ; xor register to itself same as zeroing register
+		int 1ah              ; Int 1ah/ah=0 get timer ticks since midnight in CX:DX
+		mov ax,dx            ; Use lower 16 bits (in DX) for random value
+
+		xor dx,dx            ; Compute randval(DX) mod 10 to get num
+		mov bx,10            ;     between 0 and 9
+		div bx               ; Divide dx:ax by bx
+								; DX = modulo from division ( 0 to 9)
+        MOV Ax,DX  
+		MUL BL
+		
+ENDM RANDOM0_1
