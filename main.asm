@@ -145,7 +145,7 @@ MAIN	PROC	FAR
 		mov AX,DS   
         mov ES,AX 
 		;***********************
-		name_page
+		;name_page
         ; But DI at the first element of the bullets array
         MOV DI,offset bullPoses
         ; Changes to the mode 
@@ -533,9 +533,10 @@ BULL_CHECK_OTHERS:
 		CMP HB_ON,0
 		JZ MOVE_BULLET_LEFT
 		CMP HB_FLAG,0
-		JZ MOVE_BULLET_LEFT
-BULL_CHECK_HELTHBACKETLEFT:		
-
+		JZ BULL_CHECK_HELTHBACKETRIGHT
+BULL_CHECK_HELTHBACKETLEFT:	
+			
+			
 		MOV AX,CX
         ADD AX,buW
         INC AX
@@ -544,12 +545,23 @@ BULL_CHECK_HELTHBACKETLEFT:
         MOV AX,HB_fy
         ADD AX,HB_LEN
         SUB AX,DX
-        CMP AX,HB_fy+3
+        CMP AX,HB_LEN+3
         JNC MOVE_BULLET_LEFT
         CALL INCSH1HEALTH
-		
         JMP DEL_BUL_LEFT
-		
+BULL_CHECK_HELTHBACKETRIGHT:	
+		MOV AX,CX
+        ADD AX,buW
+        INC AX
+        CMP AX,HBR_fx
+        JNE MOVE_BULLET_LEFT
+        MOV AX,HB_fy
+        ADD AX,HB_LEN
+        SUB AX,DX
+        CMP AX,HB_LEN+3
+        JNC MOVE_BULLET_LEFT
+        CALL INCSH1HEALTH
+        JMP DEL_BUL_LEFT
         ; Call MVBULL, it moves the left bullet and stores the new position in [SI]
 MOVE_BULLET_LEFT:
 		CALL MVBULL
@@ -603,7 +615,39 @@ BULR_CHECK_OTHERS:
         ;*******************************************************
         ; TODO: HERE YOU CAN DETECT COLLISION IN OTHER OBJECTS
         ;*******************************************************
-
+		CMP HB_ON,0
+		JZ MOVE_BULLET_RIGHT
+		CMP HB_FLAG,0
+		JZ BULR_CHECK_HELTHBACKETRIGHT
+BULR_CHECK_HELTHBACKETLEFT:	
+			
+			
+		MOV AX,CX
+        ADD AX,buW
+        DEC AX
+        CMP AX,HBL_Ex
+        JNE MOVE_BULLET_RIGHT
+        MOV AX,HB_fy
+        ADD AX,HB_LEN
+        SUB AX,DX
+        CMP AX,HB_LEN+3
+        JNC MOVE_BULLET_RIGHT
+        CALL INCSH2HEALTH
+        JMP DEL_BUL_RIGHT
+BULR_CHECK_HELTHBACKETRIGHT:	
+		MOV AX,CX
+        ADD AX,buW
+        DEC AX
+        CMP AX,HBR_Ex
+        JNE MOVE_BULLET_RIGHT
+        MOV AX,HB_fy
+        ADD AX,HB_LEN
+        SUB AX,DX
+        CMP AX,HB_LEN+3
+        JNC MOVE_BULLET_RIGHT
+        CALL INCSH2HEALTH
+        JMP DEL_BUL_RIGHT
+MOVE_BULLET_RIGHT:
         ; Call MVBULR, it moves the left bullet and stores the new position in [SI]
         CALL MVBULR
         JMP END_BUL_LP 
@@ -806,16 +850,35 @@ OUT_DECH2_LB:
         RET
 DECP2HEALTH ENDP
 
+INCSH2HEALTH PROC 
+	
+	PUSHA
+	PUSH DI
+	PUSH SI
+	cmp sh2health,10
+	jz  conthb2
+	inc sh2health
+	call drawhelthsh2
+	conthb2:
+	MOV	HB_CDANUM,AX
+	DELETEH_HB HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
+	POP SI
+	POP DI
+	POPA
+	RET
+
+INCSH2HEALTH ENDP
+
 INCSH1HEALTH PROC 
 	
 	PUSHA
 	PUSH DI
 	PUSH SI
-	dec sh2health
-	call drawhelthsh2
-	MOV AX,1
-	MOV HB_CDA ,1
-	MOV AX,0
+	cmp sh1health,10
+	jz  conthb
+	inc sh1health
+	call drawhelthsh1
+	conthb:
 	MOV	HB_CDANUM,AX
 	DELETEH_HB HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
 	POP SI
