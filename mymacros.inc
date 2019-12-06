@@ -76,6 +76,14 @@ clrscr macro      ; marco to clear vedio screen & make new one
 		int 10h 
 		video_mode 00H
 ENDM  clrscr
+
+; GETKEY - Get key pressed (Wait for a key-AH:scancode,AL:ASCII) 
+GETKEY MACRO 
+    MOV AH,0
+    INT 16H
+ENDM GETKEY
+;*********************************
+
 ;*********************************
 PRINTMESSAGE MACRO MyMessage           ; to print message
                 mov ah,9h

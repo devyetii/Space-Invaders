@@ -63,12 +63,9 @@ include mymacros.inc
 			MOVE_CURSOR 7H,7H,0 ;to write in the middle of screen
 			PRINTMESSAGE st1   ;Print 3 cases
 ;********************************************
-			mov ah,0
-			int 16h
-			mov ah,0    ;Get key pressed (Wait for a key-AH:scancode,AL:ASCII)
-			int 16h  
+			GETKEY
 			cmp ah,3bh   ;compare key pressed with F1 & scan code of F1 IS "3BH"
-		jz clean1    ;jump to chatting screen if F1 presssed
+			jz clean1    ;jump to chatting screen if F1 presssed
 		jnz nxt1  ;check for F2
 ;***********************************************
 		clean1:   ;chatting screen
@@ -78,10 +75,9 @@ include mymacros.inc
 			PRINTMESSAGE st3     ;Display ST3
 			tack_keyboard:
 				mov ah,0
-				int 16h
-				mov ah,0
 				int 16h   
 				cmp ah,1ch ;compare key with ENTER 
+
 		jz LABLE4  ;jump to main menu ; "ask"
 		jnz tack_keyboard
 ;*******************
@@ -115,7 +111,7 @@ include mymacros.inc
 ;********************************
  level_one PROC
 ;****************************** to play mode
-		DETERMINE_mode 13H, 00H;
+		DETERMINE_mode 13H,00H
 ;*******************to make background color
 		PREP_BACKBROUND BGCOLOR
 ;*************************************************DROWWING
@@ -150,7 +146,6 @@ include mymacros.inc
 		CMP REFflag,1    ; if move up else move down
 		JZ REFMOVEUP
 		JNZ REFMOVEDOWN
-		
 ;********
 		REFMOVEDOWN:
 			MOVEDOWN REFfristY,REFLECTORlen,REFfristX,REFendX,BGCOLOR,REFLECTORCOLOR ;MOVE DOWN REFLECTOR "MOVEDOWN" IS A MACRO
