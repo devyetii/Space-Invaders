@@ -70,6 +70,26 @@ GETKEY MACRO
     INT 16H
 ENDM GETKEY
 
+;GETKEY_NOWAIT - Get key pressed without waiting
+GETKEY_NOWAIT MACRO
+    MOV AH,1
+    INT 16H
+    clearkeyboardbuffer
+ENDM GETKEY_NOWAIT
+
+;--------------------------------------------------------------------------
+; clears keyboard buffer
+;--------------------------------------------------------------------------
+clearkeyboardbuffer MACRO
+	push	ax
+	mov		ax, 0000h
+	mov		es, ax
+	mov		es:[041ah], 041eh
+	mov		es:[041ch], 041eh				; Clears keyboard buffer
+	pop		ax
+endm  clearkeyboardbuffer
+
+
 ; COMPARE_KEY - Compares a keyboard key Stored in AH with a Given scan code and sets ZF if equal
 ; Params: (byte) KSCAN - Scan code for the compared key  
 COMPARE_KEY MACRO KSCAN

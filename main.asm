@@ -65,7 +65,7 @@ p2_bulls   db   0       ; No of bullets fired
 ;****************************************************
 REFfristY DW    1
 REFfristX EQU  471
-REFendX   EQU  476
+REFendX   EQU  476 
 REFflag   db    01             ; it take one or two  to detrmine if it move down "if 1" or move up "if 0"
 REFSPEED  EQU   0fffh          ;It is the counter when equal zero the reflector step & it control speed of reflector
 REFCTR    dw    0fffh
@@ -153,18 +153,43 @@ SHOW_CHAT ENDP
 ; * PARAMS :  DI => *First_Empty_Byte
 ; ************************************************
 SHOW_GAME PROC
+        ; Drawing and preparing
         PREP_BACKBROUND BGCOLOR
         CALL DRWINFO
         CALL DRWREFL
         CALL DRWSHIPS
+
 GM_LP:
-        GETKEY
+        ; Moving Reflector and bullets
+        ; Moving Reflector
+        CMP REFCTR,0
+        JE  MVREFL_LB
+
+        ; Moving Bullets
+MVBUL_LB:
+
+        ; Decrementing speed counter
+        DEC REFCTR
+        DEC bullLCtr
+        DEC bullRCtr
+        JMP USER_INP
+
+        ; Branch of reflector motion
+MVREFL_LB: 
+        MVREFL
+        JMP MVBUL_LB
+
+        ; Branch of handling User Input
+USER_INP:
+
+        GETKEY_NOWAIT
+        
         ; Handle Pause and stop clicks
         COMPARE_KEY 03EH        ; Scan code for f4
         JNE CHK_PAUSE
         RET                     ; Ends the game if f4 is clicked
 CHK_PAUSE:
-        COMPARE_KEY 03BH
+        COMPARE_KEY 03BH        ; Scan code of f1
         JNE GO
         PAUSE
 
@@ -184,21 +209,7 @@ GO:     COMPARE_KEY  72   ; Scan code for UP arrow
         COMPARE_KEY 02DH    ; Scan code for X
         CALL_MACRO_IF_EQUAL ADDBULR
 
-        ; Move Reflector
-        CMP REFCTR,0
-        JE  MVREFL_LB
-
-MVBUL_LB:
-        ; Decrement speed counter
-        DEC REFCTR
-        DEC bullLCtr
-        DEC bullRCtr
         JMP GM_LP
-
-        ; Branch of reflector motion
-MVREFL_LB: 
-        MVREFL
-        JMP MVBUL_LB
 
         RET
 SHOW_GAME ENDP
