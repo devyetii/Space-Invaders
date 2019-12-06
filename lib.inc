@@ -231,125 +231,106 @@ cursor_on macro  ; TO SHOW CURSOR
 	   int  10h
 endm	cursor_on 
 
-dec_HBAL macro HBA ,HBANUM,HBMCA,HBFLAG,HBLfx,HBLEx,HBfy,HBLEN,HBcolor,HBRfx,HBREx,HBCDA,HBMCDA,HBCDANUM,HBMCDANUM, HBON
-		local enddec_HBA
-		local dec_2
-		local dec_3
-		local drow_BHL
-		local drow_BHR
-		local drow_BH
-		LOCAL PREP
-		PUSHA
-		PUSH DI
-		PUSH SI
-		
-		cmp HBA,0
-		jz dec_2
-		dec HBA
-		jmp enddec_HBA
-		dec_2:
-			CMP HBANUM,0
-			JZ drow_BH
-			DEC HBANUM
-			MOV HBA,HBMCA
-			JMP enddec_HBA
-		drow_BH:
-		 CMP HBFLAG  ,1
-		 JZ drow_BHL
-		 JNZ drow_BHR
-		drow_BHL:
-		drow_thick_line HBLfx,HBLEx,HBfy,HBLEN,HBcolor
-		JMP PREP
-		drow_BHR:
-		drow_thick_line HBRfx,HBREx,HBfy,HBLEN,HBcolor
-		
-		PREP:
-		mov HBCDA,HBMCDA
-		mov HBCDANUM,HBMCDANUM
-		MOV HBON,1
-		
-		enddec_HBA:
-		POP SI
-		POP DI
-		POPA
-endm dec_HBAL
+
+DROWPRE_POWERUP MACRO
+				LOCAL LABPROWER1
+				LOCAL DROW_LEFT
+				LOCAL END_DROW_POWER_UP
+				PUSHA
+				PUSH SI
+				PUSH DI
+				XOR byte ptr POWERUP_XFLAG ,00000001B
+				RANDOM0_1 04H
+				ADD AX,1
+				MOV POWERUP_color,AL
+				RANDOM0_1 30H
+				MOV BX,POWERUP_fy
+				ADD BX,AX
+				CMP BX,POWERUP_MAXY 
+				JB LABPROWER1
+					MOV BX,11H
+				LABPROWER1:
+					MOV POWERUP_fy,BX
+				CMP POWERUP_XFLAG,0
+				JNZ DROW_LEFT
+					drow_thick_line POWERUPR_fx,POWERUPR_ex,POWERUP_fy,POWERUP_LEN,POWERUP_coloR
+				JMP END_DROW_POWER_UP
+				DROW_LEFT:
+					drow_thick_line POWERUPL_fx,POWERUPL_ex,POWERUP_fy,POWERUP_LEN,POWERUP_coloR
+				END_DROW_POWER_UP:
+					MOV POWERUP_COUNTER,POWERUP_TODELETE
+					MOV POWERUP_ON,1
+					POP DI
+					POP SI
+					POPA
+ENDM DROWPRE_POWERUP
+
+DELETEP_POWERUP MACRO
+				PUSHA
+				PUSH SI
+				PUSH DI
+				drow_thick_line POWERUPR_fx,POWERUPR_ex,POWERUP_fy,POWERUP_LEN,00H
+				drow_thick_line POWERUPL_fx,POWERUPL_ex,POWERUP_fy,POWERUP_LEN,00H
+				MOV POWERUP_COUNTER,POWERUP_TODROW
+				MOV POWERUP_ON,0
+				POP DI
+				POP SI
+				POPA
+ENDM DELETEP_POWERUP
 
 
-dec_HBDAL macro HBCA ,HBCANUM,HBMCA,HBFLAG,HBLfx,HBLEx,HBfy,HBLEN,HBcolor,HBRfx,HBREx,HBCDA,HBMCDA,HBCDANUM,HBMCDANUM, HBON,HBMCANUM,HBMAXY
-		local enddec_HBDA
-		local delete_BH
-		local dec_num
-		
-		PUSHA
-		PUSH DI
-		PUSH SI
-		
-		dec HBCDA
-		cmp HBCDA,0
-		jz dec_NUM
-		jmp enddec_HBDA
-		dec_NUM:
-			CMP HBCDANUM,0
-			JZ delete_BH
-			DEC HBCDANUM
-			MOV HBCDA,HBMCDA
-			JMP enddec_HBDA
-			
-		deletE_BH:
-			DELETEH_HB HBCA ,HBCANUM,HBMCA,HBFLAG,HBLfx,HBLEx,HBfy,HBLEN,HBcolor,HBRfx,HBREx,HBCDA,HBMCDA,HBCDANUM,HBMCDANUM, HBON,HBMCANUM,HBMAXY
-			
-		enddec_HBDA:
-		POP SI
-		POP DI
-		POPA
-endm dec_HBDAL
 
-DELETEH_HB MACRO  HBCA ,HBCANUM,HBMCA,HBFLAG,HBLfx,HBLEx,HBfy,HBLEN,HBcolor,HBRfx,HBREx,HBCDA,HBMCDA,HBCDANUM,HBMCDANUM, HBON,HBMCANUM,HBMAXY
-				local delete_BHL
-				local delete_BHR
-				LOCAL PREPD
-				LOCAL  ENDDEC
-				LOCAL DO_ELSE
-				
-		 CMP HBFLAG  ,1
-		 JZ dELETE_BHL
-		 JNZ dELETE_BHR
-		dELETE_BHL:
-		drow_thick_line HBLfx,HBLEx,HBfy,HBLEN,BGCOLOR
-		JMP PREPD
-		dELETE_BHR:
-		drow_thick_line HBRfx,HBREx,HBfy,HBLEN,BGCOLOR
-		
-		PREPD:
-		mov HBCA,HBMCA
-		mov HBCANUM,HBMCANUM
-		XOR AX,AX
-		MOV HBON ,AL
-		
-		mov HBCDA,AX
-		mov HBCDANUM,AX
-		
-		XOR byte ptr HBFLAG,00000001B
-		
-		RANDOM0_1
-		MOV BX,HBfy
-		ADD BX,AX
-		CMP BX,HBMAXY
-		JA DO_ELSE
-		MOV HBFY,BX
-		JMP ENDDEC
-		DO_ELSE:
-			MOV HBFY,11H
-			 ENDDEC:
-ENDM DELETEH_HB
 
-RANDOM0_1 MACRO
+DROWPRE_ROCKET MACRO
+				LOCAL LABROCKET
+				LOCAL DROW__LEFT
+				LOCAL END_DROW_ROCKET
+				PUSHA
+				PUSH SI
+				PUSH DI
+				XOR byte ptr ROCKET_XFLAG ,00000001B
+				RANDOM0_1 30H
+				MOV BX,ROCKET_fy
+				ADD BX,AX
+				CMP BX,ROCKET_MAXY 
+				JB LABROCKET
+					MOV BX,11H
+				LABROCKET:
+					MOV ROCKET_fy,BX
+				CMP ROCKET_XFLAG,0
+				JNZ DROW__LEFT
+					drow_thick_line ROCKETR_fx,ROCKETR_ex,ROCKET_fy,ROCKET_LEN,ROCKET_coloR
+				JMP END_DROW_ROCKET
+				DROW__LEFT:
+					drow_thick_line ROCKETL_fx,ROCKETL_ex,ROCKET_fy,ROCKET_LEN,ROCKET_coloR
+				END_DROW_ROCKET:
+					MOV ROCKET_COUNTER,ROCKET_TODELETE
+					MOV ROCKET_ON,1
+					POP DI
+					POP SI
+					POPA
+ENDM DROWPRE_ROCKET
+
+DELETEP_ROCKET MACRO
+				PUSHA
+				PUSH SI
+				PUSH DI
+				drow_thick_line ROCKETR_fx,ROCKETR_ex,ROCKET_fy,ROCKET_LEN,00H
+				drow_thick_line ROCKETL_fx,ROCKETL_ex,ROCKET_fy,ROCKET_LEN,00H
+				MOV ROCKET_COUNTER,ROCKET_TODROW
+				MOV ROCKET_ON,0
+				POP DI
+				POP SI
+				POPA
+ENDM DELETEP_ROCKET
+
+RANDOM0_1 MACRO NUM
 		xor ax,ax            ; xor register to itself same as zeroing register
 		int 1ah              ; Int 1ah/ah=0 get timer ticks since midnight in CX:DX
 		mov ax,dx            ; Use lower 16 bits (in DX) for random value
 
 		xor dx,dx            ; Compute randval(DX) mod 10 to get num
-		mov bx,10            ;     between 0 and 9
+		mov bx,NUM            ;     between 0 and 9
 		div bx               ; Divide dx:ax by bx
 							; DX = modulo from division ( 0 to 9)
         MOV Ax,DX  
