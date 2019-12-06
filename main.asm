@@ -91,7 +91,7 @@ MAIN	PROC	FAR
         ; But DI at the first element of the bullets array
         MOV DI,bullPoses
         ; Changes to the mode 
-        DETERMINE_MODE 13H ,00H ; VIDEO MODE
+        DETERMINE_MODE 13H ,0H ; VIDEO MODE
 MAIN_MENU: 
         CALL SHOW_MAIN_MENU
 MAIN_GET_USER_INP:
