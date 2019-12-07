@@ -46,15 +46,12 @@ DR_R:   MOV CX, 300D
         ; Beta Version of the Game Loop MAIN_LP
 MAIN_LP : 
         ; Move the two bullets to the end simultenously
-        ; 1: Use SI to point to the start of the array
         DELAY
-
-
-
+        ; 1: Use SI to point to the start of the array
         MOV SI, offset bullPoses
         
-        ; 2: At the beginning of the loop check if SI points to bullet data
 BULL_LP: 
+        ; 2: At the beginning of the loop check if SI points to bullet data
         ; We also check if no data here or reached the mark of the end and if so we break the loop to outside
         CMP [SI],0FFFFH
         JE  MAIN_LP
