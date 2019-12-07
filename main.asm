@@ -167,7 +167,10 @@ MAIN	PROC	FAR
 		mov AX,DS   
         mov ES,AX 
 		;***********************
-		;name_page
+		cmp playership1,'$'  ; to check if i need to enter player name or if it aready exist
+		jnz main_menu_pre
+		name_page
+		main_menu_pre:
         ; But DI at the first element of the bullets array
         MOV DI,offset bullPoses
         ; Changes to the mode 
@@ -199,9 +202,6 @@ GAME:   CALL SHOW_GAME
 ENDG:   DETERMINE_MODE 03H, 00H
         HALT
 MAIN	ENDP
-
-
-
 ; Procedures
 ;***********************************************************
 SHOW_MAIN_MENU  PROC
@@ -312,6 +312,7 @@ USER_INP:
         COMPARE_KEY 03EH        ; Scan code for f4
         JNE CHK_PAUSE
         CALL DRWWINNER
+		call main
         RET                     ; Ends the game if f4 is clicked
 CHK_PAUSE:
         COMPARE_KEY 03BH        ; Scan code of f1
@@ -959,11 +960,11 @@ INVBUL  ENDP
 ; * PARAMS :  NONE
 ; ************************************************
 DECP1HEALTH PROC
-        CMP sh1health, 1
-        JlE PLAYER2_WINS        ; Because the signed value of the health can be negative so we need signed comparison
         MOV AX,sh1health
         SUB AX,bullRPwr
 		pusha
+		CMP sh1health, 1
+        JlE PLAYER2_WINS        ; Because the signed value of the health can be negative so we need signed comparison
 		CMP SH1PROTECT_FLAG,0
 		JZ LABDC1
 		DEC SH1TIMES_PROTECT
@@ -990,7 +991,6 @@ PLAYER2_WINS: ; winner
         PRINTMESSAGE playership2
         PRINTMESSAGE st7
         DELAY
-       
 OUT_DECH1_LB:        
         RET
 DECP1HEALTH ENDP
@@ -1001,11 +1001,11 @@ DECP1HEALTH ENDP
 ; * PARAMS :  NONE
 ; ************************************************
 DECP2HEALTH PROC
-        CMP sh2health, 1
-        JlE PLAYER1_WINS        ; Because the signed value of the health can be negative so we need signed comparison
         MOV AX,sh2health
         SUB AX,bullLPwr
 		pusha
+		CMP sh2health, 1
+        JlE PLAYER1_WINS        ; Because the signed value of the health can be negative so we need signed comparison
 		CMP SH2PROTECT_FLAG,0
 		JZ LABDC21
 		DEC SH2TIMES_PROTECT
@@ -1033,6 +1033,8 @@ PLAYER1_WINS:
 OUT_DECH2_LB:      
         RET
 DECP2HEALTH ENDP
+
+
 POWER_UP_CHECK_TYPE_SH2 Proc
 		CMP POWERUP_COLOR,HELTH_UP
 		JNZ CMPARE_SPEAD_UP
