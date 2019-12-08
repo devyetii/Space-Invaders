@@ -123,15 +123,33 @@ INCLUDE lib.inc
 		HBR_ex     EQU 185 		; RIGTH SIDE END X
 		HBL_fx     EQU 70	 	; LEFT SIDE FRIST X
 		HBL_ex     EQU 75 		; LEFT SIDE END X
-		HB_MCANUM  equ 00h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		HB_MCANUM  equ 0fh     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
 		HB_MCDANUM equ 03h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
 		HB_color  equ 04h
 		HB_MCA    equ 0ffffh  ; THE MAIN VALUE OF HB_CA 
 		HB_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
-		;HB_yCH    equ 7   ; THE CHANG IN Y 
-		;HB_xCH    equ 10   ; THE CHANG IN x
-		HB_MAXY   equ 137 ; THE MAX Y POSSIBL
-		;HB_MAXx   equ 305 ; THE MAX x POSSIBL
+		HB_MAXY    EQU 137
+;************************************************************
+;****the rock when touch the bullet  delete it 
+		R_FLAG   DB  0          ; TO DETRMINE RIGTH '0' OR LEFT '1'
+		R_fy     dw  59 ;; FRIST Y
+		R_CA     dw 0ffffh ; WHEN R_CA &R_CANUM =0 health packet LEFT
+		R_CANUM  dw 07h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		R_CDA    dw  0h  ;NUM IT STILL APEAR
+		R_CDANUM dw  0h  ;NUM IT STILL APEAR
+		R_ON     DB  0H   ; TO DETERMINE IF HEALTH BACKET ON OR OFF 
+		
+		R_LEN     EQU 30
+		RR_fx     EQU 180 		; RIGTH SIDE FRIST X
+		RR_ex     EQU 187 		; RIGTH SIDE END X
+		RL_fx     EQU 70	 	; LEFT SIDE FRIST X
+		RL_ex     EQU 77 		; LEFT SIDE END X
+		R_MCANUM  equ 03h     ; main NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		R_MCDANUM equ 03h     ; NUM TO MAKE IT ABEAR AFTER LARGE TIME
+		R_color  equ 67h
+		R_MCA    equ 0ffffh  ; THE MAIN VALUE OF R_CA 
+		R_MCDA   equ 0Ffffh ; MAIN NUM IT STILL APEAR
+		R_MAXY   EQU  110
 ;*******************************************************
 ;buffer to take name
 		MyBuffer LABEL BYTE ; TO READ IN 
@@ -534,6 +552,7 @@ GO_BULLS_GO:
 		mov fl,01h
         CALL DECP2HEALTH
         JMP DEL_BUL_LEFT
+		
 BULL_CHECK_REFL:
         ; 3. Reflector
         ; TODO: -for me- Add comments
@@ -667,7 +686,6 @@ BULR_CHECK_HELTHBACKETRIGHT:
         JNC MOVE_BULLET_RIGHT
         CALL INCSH2HEALTH
         JMP DEL_BUL_RIGHT
-
 MOVE_BULLET_RIGHT:
         ; Call MVBULR, it moves the left bullet and stores the new position in [SI]
         CALL MVBULR
@@ -898,7 +916,7 @@ INCSH2HEALTH PROC
 	call drawhelthsh2
 	conthb2:
 	MOV	HB_CDANUM,AX
-	DELETEH_HB HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
+	DELETEH_HB HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM,HB_MAXY
 	POP SI
 	POP DI
 	POPA
@@ -915,7 +933,7 @@ INCSH1HEALTH PROC
 	call drawhelthsh1
 	conthb:
 	MOV	HB_CDANUM,AX
-	DELETEH_HB HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
+	DELETEH_HB HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM,HB_MAXY
 	POP SI
 	POP DI
 	POPA
