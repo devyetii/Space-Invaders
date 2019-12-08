@@ -1,0 +1,29 @@
+
+// In the data stack
+not_drawing_timer = 50000
+drawing_timer = 40000
+
+// Start of the loop
+	while(true) {
+	........
+	........
+	if (not_drawing_timer > 0)
+		not_drawing_timer--;	
+	else if (not_drawing_timer == 0) {
+			draw_powerup(random_x, random_y, random_type);
+			drawing_timer = 40000
+			not_drawing_timer = -1   // not to come here again while in drawing phase
+	}
+
+	if (drawing_timer > 0)
+		drawing_timer--;
+	else if (drawing_timer == 0) {
+			draw_powerup(random_x, random_y, random_type);
+			not_drawing_timer = 40000
+			drawing_timer = -1   // not to come here again while in drawing phase
+	}
+	.........
+	.........
+}
+
+

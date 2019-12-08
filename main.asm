@@ -27,6 +27,7 @@ INCLUDE lib.inc
 		st3 db "screen for chatting ",10,13,10,13,'$'
 		st4 db "screen for playing ",10,13,10,13,'$'
 		st5 db "screen for Exiting ",10,13,10,13,'$'
+		st7 db 10,13,10,13,"Click f4 to return to main menu $"
 		window_winner db "***  The Winner is  *** ",10,13,10,13,'$'
 		equal_window db "***  no one  ****",'$'
 
@@ -57,7 +58,7 @@ INCLUDE lib.inc
 		helthsh1ex      dw 102,107,112,117,122,127,132,137,142,147
 		helthcolor      equ 04h
 		helthsh2fx      dw  249,254,259,264,269,274,279,284,289,294  
-		helthsh2Ex		dw  252,257,262,267,272,277,282,287,292,297
+		helthsh2Ex	dw  252,257,262,267,272,277,282,287,292,297
 ; Player 1 Variables
 ;****************************************************
 		sh1health   Dw 10    
@@ -74,15 +75,17 @@ INCLUDE lib.inc
 		;****************************************************
 		sh2health   Dw 10   
 		sh2p1fy   DW   1
-		sh2p2fy   DW   16
+		sh2p2fy   DW   12
 		sh2p1fx   EQU 300
 		sh2p1ENDx equ 310
 		sh2p2fx   EQU 294
 		sh2p2ENDx equ 299
 		p2_bulls   db   0       ; No of bullets fired
 		fr       db   00h
-; Reflector Variables
-;****************************************************
+                ; IsThereAWinner - boolean value to determine if there's a final winner or not
+                IsThereAWinner db 00H
+                ; Reflector Variables
+                ;****************************************************
 		REFfristY DW    1
 		REFfristX EQU  151
 		REFendX   EQU  156 
@@ -145,7 +148,7 @@ MAIN	PROC	FAR
 		mov AX,DS   
         mov ES,AX 
 		;***********************
-		;name_page
+		name_page
         ; But DI at the first element of the bullets array
         MOV DI,offset bullPoses
         ; Changes to the mode 
@@ -173,8 +176,6 @@ CHAT_GET_USER_INP:        ; Sometimes we need to jump here without redrawing the
 ; Branch of Game screen calls the SHOW_GAME Proc.
 GAME:   CALL SHOW_GAME
         JMP MAIN_MENU            ; If the user clicks enter, go to main-menu
-        
-        PAUSE
 
 ENDG:   DETERMINE_MODE 03H, 00H
         HALT
@@ -211,6 +212,8 @@ SHOW_CHAT ENDP
 ; * PARAMS :  DI => *First_Empty_Byte
 ; ************************************************
 SHOW_GAME PROC
+        ; Reseting all game variables in the memory
+        CALL CLRMEMORY
         ; Drawing and preparing
         PREP_BACKBROUND BGCOLOR
         CALL DRWINFO
@@ -220,69 +223,54 @@ SHOW_GAME PROC
 		call drawhelthsh2
 		
 GM_LP:
-		
+        ; Handling counters and drawing of Powerups
+        cmp HB_CDA,0
+        jnz labhd1
+        CMP  HB_CDANUM,0
+        jnz labhd1
+                dec_HBAL  HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON
+        jmp continue1
+        labhd1:
+                dec_HBDAL HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
+        continue1:
+
         ; Moving Reflector and bullets
-        ; Moving Reflector
-		;call drawhelth
-		
-		cmp HB_CDA,0
-		jnz labhd1
-		CMP  HB_CDANUM,0
-		jnz labhd1
-			dec_HBAL  HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON
-		jmp continue1
-		labhd1:
-			dec_HBDAL HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
-			
-		continue1:
+        ; Cheking for Moving the Reflector
         CMP REFCTR,0
         JE  MVREFL_LB 
+        ; Checking for Moving Bullets and moving them
 CHK_BULL:
         CMP bullLCtr,0
         JNE  DEC_CTRS_LB
         MOV bullLCtr,bullLSpeed
         CALL FAR PTR MVBULLSPROC
+        ; Here we check if it happens to be a winner, then we exit the game function
+        CMP IsThereAWinner, 00h
+        JE DEC_CTRS_LB
+EXIT_IF_F4:
+        GETKEY
+        COMPARE_KEY 03EH
+        JNE EXIT_IF_F4
+        RET
         ; Decrementing speed counter
 DEC_CTRS_LB:
         DEC REFCTR
         DEC bullLCtr
         DEC bullRCtr
         JMP FAR PTR USER_INP
-        ; Moving Bullets
+
+        ; Moving Reflector Branch
 MVREFL_LB:
         MVREFL
         JMP CHK_BULL
 
         ; Branch of handling User Input
 USER_INP:
-
         GETKEY_NOWAIT
-        
         ; Handle Pause and stop clicks
         COMPARE_KEY 03EH        ; Scan code for f4
         JNE CHK_PAUSE
-		DETERMINE_MODE 00,00
-		PREP_BACKBROUND 0fh
-        MOVE_CURSOR  07,07,0
-		PRINTMESSAGE window_winner
-		MOVE_CURSOR  0fh,09,0
-		mov ax,sh2health
-		CMP sh1health,ax
-		ja labt1
-		je labt2
-		jb labt3
-		labt1:
-		PRINTMESSAGE playership1
-		jmp endtlab
-		labt2:
-		PRINTMESSAGE equal_window
-		jmp endtlab
-		labt3:
-		PRINTMESSAGE playership2
-		jmp endtlab
-		endtlab:
-		DELAY
-		;HALT  ; should be stop 5 sec then go MAIN  main menu 
+        CALL DRWWINNER
         RET                     ; Ends the game if f4 is clicked
 CHK_PAUSE:
         COMPARE_KEY 03BH        ; Scan code of f1
@@ -412,6 +400,41 @@ drawhelthsh2 proc
 	ret
 drawhelthsh2 endp
 
+;*******************************************************
+;*******************************************************
+;               Game Helper functions
+;*******************************************************
+;*******************************************************
+
+;*************************************************
+; **** DRWWINNER - Function draws winner screen for 5 seconds ****
+; * USES :  AX, BX, CX, DX
+; * PARAMS :  NONE
+; ************************************************
+DRWWINNER PROC
+        PREP_BACKBROUND 00h
+        MOVE_CURSOR  07,07,0
+        PRINTMESSAGE window_winner
+        MOVE_CURSOR  0fh,09,0
+        mov ax,sh2health
+        CMP sh1health,ax
+        ja labt1
+        je labt2
+        jb labt3
+        labt1:
+                PRINTMESSAGE playership1
+                jmp endtlab
+        labt2:
+                PRINTMESSAGE equal_window
+                jmp endtlab
+        labt3:
+                PRINTMESSAGE playership2
+                jmp endtlab
+        endtlab:
+                DELAY
+        RET
+DRWWINNER ENDP
+
 ;*************************************************
 ; **** GAMECHAT - Function for in-game chatting ****
 ; * USES :  AX, BX, CX, DX
@@ -530,14 +553,12 @@ BULL_CHECK_OTHERS:
         ;*******************************************************
         ; TODO: HERE YOU CAN DETECT COLLISION IN OTHER OBJECTS
         ;*******************************************************
-		CMP HB_ON,0
-		JZ MOVE_BULLET_LEFT
-		CMP HB_FLAG,0
-		JZ BULL_CHECK_HELTHBACKETRIGHT
+        CMP HB_ON,0
+        JZ MOVE_BULLET_LEFT
+        CMP HB_FLAG,0
+        JZ BULL_CHECK_HELTHBACKETRIGHT
 BULL_CHECK_HELTHBACKETLEFT:	
-			
-			
-		MOV AX,CX
+	MOV AX,CX
         ADD AX,buW
         INC AX
         CMP AX,HBL_fx
@@ -550,7 +571,7 @@ BULL_CHECK_HELTHBACKETLEFT:
         CALL INCSH1HEALTH
         JMP DEL_BUL_LEFT
 BULL_CHECK_HELTHBACKETRIGHT:	
-		MOV AX,CX
+	MOV AX,CX
         ADD AX,buW
         INC AX
         CMP AX,HBR_fx
@@ -562,6 +583,7 @@ BULL_CHECK_HELTHBACKETRIGHT:
         JNC MOVE_BULLET_LEFT
         CALL INCSH1HEALTH
         JMP DEL_BUL_LEFT
+
         ; Call MVBULL, it moves the left bullet and stores the new position in [SI]
 MOVE_BULLET_LEFT:
 		CALL MVBULL
@@ -595,7 +617,7 @@ R_MV:
         SUB AX,DX
         CMP AX,ShipSizep1y+3
         JNC BULR_CHECK_REFL
-		mov fr,01h
+	mov fr,01h
         CALL DECP1HEALTH
         JMP DEL_BUL_RIGHT
 
@@ -615,14 +637,12 @@ BULR_CHECK_OTHERS:
         ;*******************************************************
         ; TODO: HERE YOU CAN DETECT COLLISION IN OTHER OBJECTS
         ;*******************************************************
-		CMP HB_ON,0
-		JZ MOVE_BULLET_RIGHT
-		CMP HB_FLAG,0
-		JZ BULR_CHECK_HELTHBACKETRIGHT
+        CMP HB_ON,0
+        JZ MOVE_BULLET_RIGHT
+        CMP HB_FLAG,0
+        JZ BULR_CHECK_HELTHBACKETRIGHT
 BULR_CHECK_HELTHBACKETLEFT:	
-			
-			
-		MOV AX,CX
+        MOV AX,CX
         ADD AX,buW
         DEC AX
         CMP AX,HBL_Ex
@@ -635,7 +655,7 @@ BULR_CHECK_HELTHBACKETLEFT:
         CALL INCSH2HEALTH
         JMP DEL_BUL_RIGHT
 BULR_CHECK_HELTHBACKETRIGHT:	
-		MOV AX,CX
+	MOV AX,CX
         ADD AX,buW
         DEC AX
         CMP AX,HBR_Ex
@@ -647,6 +667,7 @@ BULR_CHECK_HELTHBACKETRIGHT:
         JNC MOVE_BULLET_RIGHT
         CALL INCSH2HEALTH
         JMP DEL_BUL_RIGHT
+
 MOVE_BULLET_RIGHT:
         ; Call MVBULR, it moves the left bullet and stores the new position in [SI]
         CALL MVBULR
@@ -793,6 +814,25 @@ INVBUL  PROC
 INVBUL  ENDP
 
 ;*************************************************
+; **** DRWPOWERUPS - Draws Health Packet Power-ups of both ships ****
+; * USES :  like CX , DX, SI, AL, AH
+; * PARAMS :  Param1 => Reg, Param2 => Reg, ...
+; ************************************************
+; DRWPOWERUPS PROC
+; 		cmp HB_CDA,0
+; 		jnz labhd1
+; 		CMP  HB_CDANUM,0
+; 		jnz labhd1
+; 			dec_HBAL  HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON
+; 		jmp continue1
+; 		labhd1:
+; 			dec_HBDAL HB_CA ,HB_CANUM,HB_MCA,HB_FLAG,HBL_fx,HBL_Ex,HB_fy,HB_LEN,HB_color,HBR_fx,HBR_Ex,HB_CDA,HB_MCDA,HB_CDANUM,HB_MCDANUM, HB_ON,HB_MCANUM
+; 		continue1:
+;                 RET
+; DRWPOWERUPS ENDP
+
+
+;*************************************************
 ; **** DECP1HEALTH - Decreases health of player1 and redraws the number + handles winning of P2****
 ; * USES :  AX, BX, CX, DX
 ; * PARAMS :  NONE
@@ -802,22 +842,20 @@ DECP1HEALTH PROC
         JlE PLAYER2_WINS        ; Because the signed value of the health can be negative so we need signed comparison
         MOV AX,sh1health
         SUB AX,bullRPwr
-		pusha
-		dec sh1health
-		call drawhelthsh1
-		popa
+        pusha
+        dec sh1health
+        call drawhelthsh1
+        popa
         JMP OUT_DECH1_LB
-		
-        ; TODO: Redraw the number
 PLAYER2_WINS: ; winner 
-        DETERMINE_MODE 00,00
-		PREP_BACKBROUND 0fh
+        MOV IsThereAWinner, 01H
+	PREP_BACKBROUND 00h
         MOVE_CURSOR  07,07,0
-		PRINTMESSAGE window_winner
-		MOVE_CURSOR  0fh,09,0
-		PRINTMESSAGE playership2
-		DELAY
-		HALT  ; should be stop 5 sec then go main menu
+        PRINTMESSAGE window_winner
+        MOVE_CURSOR  0fh,09,0
+        PRINTMESSAGE playership2
+        PRINTMESSAGE st7
+        DELAY
 OUT_DECH1_LB:        
         RET
 DECP1HEALTH ENDP
@@ -838,20 +876,19 @@ DECP2HEALTH PROC
 		popa
         JMP OUT_DECH2_LB
 PLAYER1_WINS:
-		DETERMINE_MODE 00,00
-		PREP_BACKBROUND 0fh
+        MOV IsThereAWinner, 01H
+        PREP_BACKBROUND 00h
         MOVE_CURSOR  07,07,0
-		PRINTMESSAGE window_winner
-		MOVE_CURSOR  0fh,09,0
-		PRINTMESSAGE playership1
-		DELAY
-		HALT  ; should be stop 5 sec then go main menu
+        PRINTMESSAGE window_winner
+        MOVE_CURSOR  0fh,09,0
+        PRINTMESSAGE playership1
+        PRINTMESSAGE st7
+        DELAY
 OUT_DECH2_LB:        
         RET
 DECP2HEALTH ENDP
 
 INCSH2HEALTH PROC 
-	
 	PUSHA
 	PUSH DI
 	PUSH SI
@@ -866,11 +903,9 @@ INCSH2HEALTH PROC
 	POP DI
 	POPA
 	RET
-
 INCSH2HEALTH ENDP
 
 INCSH1HEALTH PROC 
-	
 	PUSHA
 	PUSH DI
 	PUSH SI
@@ -945,4 +980,39 @@ exit3:
 ret
 changeColorRight endp
 
+CLRMEMORY PROC
+        ; Reset winner flag
+        MOV IsThereAWinner, 00H
+        ; Reset variable data of ship1
+        MOV sh1p1fy,1D
+        MOV sh1p2fy,12D
+        ; Reset variable data of ship2
+        MOV sh2p1fy,1D
+        MOV sh2p2fy,12D
+        ; Reset variable data of the reflector
+        MOV REFfristY, 1D
+        MOV REFflag, 1D
+        MOV REFCTR, 0FFFH
+        ; Reset bullets array
+        CMP [DI], 0FEFEH
+        JNE START_WITHOUT_INITIAL_DECREMENT
+        SUB DI,4
+START_WITHOUT_INITIAL_DECREMENT:
+        MOV [DI], 0FFFFH
+        MOV [DI+2], 0FFFFH
+        CMP DI,offset bullPoses
+        JE FINISHED_CLEANING_BULLS
+        SUB DI,4
+        JMP START_WITHOUT_INITIAL_DECREMENT
+FINISHED_CLEANING_BULLS:
+        ; Reset bullets counter
+        MOV bullLCtr, bullLSpeed
+        MOV bullRCtr, bullRSpeed
+        ; Reset health
+	MOV sh1health,10D
+        MOV sh2health,10D  
+        ; Check for any undeleted powerups and delete them
+        MOV HB_ON,0H
+        RET
+CLRMEMORY ENDP
 END	MAIN
