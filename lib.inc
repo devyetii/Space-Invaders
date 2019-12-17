@@ -96,6 +96,12 @@ COMPARE_KEY MACRO KSCAN
     CMP AH, KSCAN
 ENDM COMPARE_KEY
 
+; COMPARE_KEY_ASCII - Compares a keyboard key Stored in AH with a Given scan code and sets ZF if equal
+; Params: (byte) KASCII - ASCII code for the compared key  
+COMPARE_KEY_ASCII MACRO KASCII
+    CMP AL, KASCII
+ENDM COMPARE_KEY_ASCII
+
 ; DRWPX - Draw a pixel at X,Y with color C
 DRWPX MACRO C
     MOV AL,C

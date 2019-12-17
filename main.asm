@@ -4,12 +4,23 @@ INCLUDE bullet.inc
 INCLUDE refl.inc
 INCLUDE name.inc
 INCLUDE lib.inc
+INCLUDE chatlib.inc
 
 
 	.MODEL SMALL
 	.386
         .STACK 64
         .DATA 
+;CHAT_GET_USER_INP
+;*************************************************
+		CURSOR1_Y EQU 11D
+		CURSOR2_Y EQU 23D
+		CURSOR1_CUR_X DB 0
+		CURSOR2_CUR_X DB 0
+		CHAR1   DB  ?
+		CHAR2   DB  ?
+		CHAT_FLAG1 DB 0
+		CHAT_FLAG2 DB 0
 ;name page
 ;****************************************************
 		playership1 db 15 dup('$'),'$' ; NAME OF PLAYER SHIP 1
@@ -28,6 +39,7 @@ INCLUDE lib.inc
 		st4 db "screen for playing ",10,13,10,13,'$'
 		st5 db "screen for Exiting ",10,13,10,13,'$'
 		st7 db 10,13,10,13,"Click f4 to return to main menu $"
+		ST8 DB 'NEED TO CHAT YOU','$'
 		window_winner db "***  The Winner is  *** ",10,13,10,13,'$'
 		equal_window db "***  no one  ****",'$'
 
@@ -177,23 +189,34 @@ MAIN	PROC	FAR
         DETERMINE_MODE 13H ,0H ; VIDEO MODE
 MAIN_MENU:
         CALL SHOW_MAIN_MENU
+		CONFIG
 MAIN_GET_USER_INP:
-        GETKEY
+        GETKEY_NOWAIT
+		JZ MAIN_RECIVE_USER_INP
         COMPARE_KEY 03BH        ; Scan code of F1 Key
-        JE CHAT
-        COMPARE_KEY 03CH        ; Scan code of F2 Key
+        JNE CMP_F2_TO_GAME
+		MOV CHAT_FLAG2,1
+		MOV CHAR1,0FFH
+		SENDMSG
+		JMP CHAT
+ CMP_F2_TO_GAME:
+		COMPARE_KEY 03CH        ; Scan code of F2 Key
         JE GAME
         COMPARE_KEY 01H        ; Scan code of ESC key
         JE  ENDG
-        JMP MAIN_GET_USER_INP
-
+        JMP MAIN_RECIVE_USER_INP
+MAIN_RECIVE_USER_INP:
+		 RECMSG         ; Function to recieve a byte, stores ASCII in AH, if nothing is set, it puts CHAR2=0
+        CMP CHAR2,0         ; Means nothing to recieve
+        JZ  MAIN_GET_USER_INP  ; Go to the top of the loop
+       COMPARE_KEY_ASCII 0FFH            
+        JNZ MAIN_GET_USER_INP  ; Go to the top of the loop
+        MOV CHAT_FLAG1,1
+		JMP CHAT
+		
 ; Branch of Chatting screen calls the SHOW_CHAT Proc.
 CHAT:   CALL SHOW_CHAT 
-CHAT_GET_USER_INP:        ; Sometimes we need to jump here without redrawing the chat screen
-        GETKEY
-        COMPARE_KEY 01CH
-        JE MAIN_MENU            ; If the user clicks enter, go to main-menu
-        JMP CHAT_GET_USER_INP        ;If the user didn't click enter, wait again
+        JMP MAIN_GET_USER_INP
 
 ; Branch of Game screen calls the SHOW_GAME Proc.
 GAME:   CALL SHOW_GAME
@@ -205,7 +228,7 @@ MAIN	ENDP
 ; Procedures
 ;***********************************************************
 SHOW_MAIN_MENU  PROC
-    PREP_BACKBROUND BGCOLOR ; TO PREPARE BACKGROUD COLOR & QUALITIES
+    PREP_BACKBROUND BGCOLOR; TO PREPARE BACKGROUD COLOR & QUALITIES
     MOVE_CURSOR 7H,7H,0 ;to write in the middle of screen
     PRINTMESSAGE st1   ;Print 3 cases
     RET
@@ -217,10 +240,21 @@ SHOW_MAIN_MENU ENDP
 ; * PARAMS :  NONE
 ; ************************************************
 SHOW_CHAT PROC
-        PREP_BACKBROUND BGCOLOR  ; TO PREPARE BACKGROUD COLOR & QUALITIES
-        MOVE_CURSOR 1,1,00H  ;to write at the top of screen
-        PRINTMESSAGE st2     ;Display ST2
-        PRINTMESSAGE st3     ;Display ST3
+		CMP CHAT_FLAG1,1
+		JZ PRINT_CMP_FLAG2
+		RET
+PRINT_CMP_FLAG2:
+		MOVE_CURSOR 7H,11H,0 ;to write in the END of screen
+		PRINTMESSAGE playership2   ;Print 
+		MOVE_CURSOR 7H,12H,0 ;to write in the middle of screen
+		PRINTMESSAGE ST8   
+		CMP CHAT_FLAG2,1
+		JZ GO_CHAT_MODE
+		RET
+GO_CHAT_MODE:		
+        DETERMINE_MODE 07H,00H
+		CHAT_MODE1
+		CALL MAIN 
         RET
 SHOW_CHAT ENDP
 
@@ -1023,7 +1057,7 @@ DECP2HEALTH PROC
         JMP OUT_DECH2_LB
 PLAYER1_WINS:
 		MOV IsThereAWinner, 01H
-        PREP_BACKBROUND 00h
+		PREP_BACKBROUND 00h
         MOVE_CURSOR  07,07,0
         PRINTMESSAGE window_winner
         MOVE_CURSOR  0fh,09,0
