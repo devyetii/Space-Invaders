@@ -189,30 +189,30 @@ MAIN	PROC	FAR
         DETERMINE_MODE 13H ,0H ; VIDEO MODE
 MAIN_MENU:
         CALL SHOW_MAIN_MENU
-		CONFIG
+        CONFIG
 MAIN_GET_USER_INP:
         GETKEY_NOWAIT
-		JZ MAIN_RECIVE_USER_INP
+        JZ MAIN_RECIVE_USER_INP
         COMPARE_KEY 03BH        ; Scan code of F1 Key
         JNE CMP_F2_TO_GAME
-		MOV CHAT_FLAG2,1
-		MOV CHAR1,0FFH
-		SENDMSG
-		JMP CHAT
+        MOV CHAT_FLAG2,1
+        MOV CHAR1,0FFH
+        SENDMSG
+        JMP CHAT
  CMP_F2_TO_GAME:
-		COMPARE_KEY 03CH        ; Scan code of F2 Key
+        COMPARE_KEY 03CH        ; Scan code of F2 Key
         JE GAME
         COMPARE_KEY 01H        ; Scan code of ESC key
         JE  ENDG
         JMP MAIN_RECIVE_USER_INP
 MAIN_RECIVE_USER_INP:
-		 RECMSG         ; Function to recieve a byte, stores ASCII in AH, if nothing is set, it puts CHAR2=0
-        CMP CHAR2,0         ; Means nothing to recieve
+        RECMSG                  ; Function to recieve a byte, stores ASCII in AH, if nothing is sent, it puts CHAR2=0
+        CMP CHAR2,0             ; Means nothing to recieve
         JZ  MAIN_GET_USER_INP  ; Go to the top of the loop
        COMPARE_KEY_ASCII 0FFH            
         JNZ MAIN_GET_USER_INP  ; Go to the top of the loop
         MOV CHAT_FLAG1,1
-		JMP CHAT
+        JMP CHAT
 		
 ; Branch of Chatting screen calls the SHOW_CHAT Proc.
 CHAT:   CALL SHOW_CHAT 
@@ -272,40 +272,36 @@ SHOW_GAME PROC
         CALL DRWINFO
         CALL DRWREFL
         CALL DRWSHIPS
-		 call drawhelthsh1
-		call drawhelthsh2
+        call drawhelthsh1
+        call drawhelthsh2
 		
 GM_LP:
-        ; Handling counters and drawing of Powerups
-		
-		DEC POWERUP_COUNTER
-		CMP POWERUP_COUNTER,0
-		JNZ continue2
-		CMP POWERUP_ON,0
-		JZ   DROW_POWERUP
-		JNZ DELETE_POWERUP
-		
+        ; Handling counters and drawing of Powerups		
+        DEC POWERUP_COUNTER
+        CMP POWERUP_COUNTER,0
+        JNZ continue2
+        CMP POWERUP_ON,0
+        JZ  DROW_POWERUP
+        JNZ DELETE_POWERUP
 DROW_POWERUP:		
-			DROWPRE_POWERUP
-			JMP continue2
+        DROWPRE_POWERUP
+        JMP continue2
 DELETE_POWERUP:
-			DELETEP_POWERUP
-			JMP continue2
-			
+        DELETEP_POWERUP
+        JMP continue2			
 continue2:
-		DEC ROCKET_COUNTER
-		CMP ROCKET_COUNTER,0
-		JNZ continue1
-		CMP ROCKET_ON,0
-		JZ   DROW_ROCKET
-		JNZ DELETE_ROCKET
-		
+        DEC ROCKET_COUNTER
+        CMP ROCKET_COUNTER,0
+        JNZ continue1
+        CMP ROCKET_ON,0
+        JZ   DROW_ROCKET
+        JNZ DELETE_ROCKET		
 DROW_ROCKET:		
-			DROWPRE_ROCKET
-			JMP continue1
+        DROWPRE_ROCKET
+        JMP continue1
 DELETE_ROCKET:
-			DELETEP_ROCKET
-			JMP continue1	
+        DELETEP_ROCKET
+        JMP continue1	
 
 			
 continue1:

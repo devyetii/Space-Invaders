@@ -52,26 +52,26 @@ CURE_JUMP_OUT_OF_RANGE:     ; Dummy branch for resolving jump out of range issue
         JMP MAIN_LP
 
 SEND_LB:                        
-        SENDMSG        ; Function to send CHAR1 to the reciever 
+        SENDMSG                         ; Function to send CHAR1 to the reciever 
 START_RECIEVE:
-         RECMSG         ; Function to recieve a byte, stores ASCII in AH, if nothing is set, it puts CHAR2=0
-        CMP CHAR2,0         ; Means nothing to recieve
-        JZ CURE_JUMP_OUT_OF_RANGE   ; Go to the top of the loop
-        COMPARE_KEY_ASCII 0FFH           ; If ESC is clicked, end the program 
+         RECMSG                         ; Function to recieve a byte, stores ASCII in AH, if nothing is set, it puts CHAR2=0
+        CMP CHAR2,0                     ; Means nothing to recieve
+        JZ CURE_JUMP_OUT_OF_RANGE       ; Go to the top of the loop
+        COMPARE_KEY_ASCII 0FFH          ; If ESC is clicked, end the program 
         JZ END_CHAT
-        COMPARE_KEY_ASCII 0DH             ; ASCII for ENTER
+        COMPARE_KEY_ASCII 0DH       ; ASCII for ENTER
         JNZ CHECK_BACKSPACE2_LB     ; If not ENTER, go check BS
         SCROLLUP2                   ; Scroll the bottom screen up 1 line
         MOV CURSOR2_CUR_X,0         ; Reset CURSOR2_CUR_X 
         JMP CURE_JUMP_OUT_OF_RANGE  ; Go to the top of the loop
 CHECK_BACKSPACE2_LB:
-        COMPARE_KEY_ASCII 08H             ; ASCII of BS
-        JNZ PRINT_CHAR_2            ; If not, then it's a character, go print it ! 
-        HANDLEBS2              ; If yes, Call the function that handles BS for reciever
-        JMP CURE_JUMP_OUT_OF_RANGE  ; Go to the top of the loop
+        COMPARE_KEY_ASCII 08H               ; ASCII of BS
+        JNZ PRINT_CHAR_2                    ; If not, then it's a character, go print it ! 
+        HANDLEBS2                           ; If yes, Call the function that handles BS for reciever
+        JMP CURE_JUMP_OUT_OF_RANGE          ; Go to the top of the loop
 PRINT_CHAR_2:
         SETCURSOR CURSOR2_CUR_X,CURSOR2_Y   ; Set the cursor to the proper printing position
-         PRTCHAR2                       ; Print the entered character in this position
+         PRTCHAR2                           ; Print the entered character in this position
         JMP CURE_JUMP_OUT_OF_RANGE          ; Go to the top of the loop
         PAUSE1
 END_CHAT:
@@ -188,7 +188,7 @@ HANDLEBS1   MACRO
 	  CMP CURSOR1_CUR_X, 0    ; If BACKSPACE, see if the cursor ia already at the left of the screen i.e. empty line
     JNZ NO_SCROLL_DOWN1
     SCROLLDOWN1
-    MOV CURSOR1_CUR_X, 79D
+    MOV CURSOR1_CUR_X, 80D
     SETCURSOR CURSOR1_CUR_X, CURSOR1_Y
     JMP END_HANDLEBS1
 NO_SCROLL_DOWN1:
@@ -206,7 +206,7 @@ HANDLEBS2   MACRO
     CMP CURSOR2_CUR_X, 0    ; If BACKSPACE, see if the cursor ia already at the left of the screen i.e. empty line
     JNZ NO_SCROLL_DOWN2
     SCROLLDOWN2
-    MOV CURSOR2_CUR_X, 79D
+    MOV CURSOR2_CUR_X, 80D
     SETCURSOR CURSOR2_CUR_X, CURSOR2_Y
     JMP END_HANDLEBS2
 NO_SCROLL_DOWN2:
