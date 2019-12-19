@@ -154,7 +154,8 @@ INCLUDE chatlib.inc
 		ROCKET_COUNTER   dD  0Affffh    ; COUNTER
 		ROCKET_color     DB 0Dh         ; COLOR 
 		ROCKET_ON        DB 0           ;IF IN SCREEN
-
+                ROCK_L_IS_DRAWN  DB 0
+                ROCK_R_IS_DRAWN  DB 0
 		ROCKET_LEN     EQU 28
 		ROCKETR_fx     EQU 226 		; RIGTH SIDE FRIST X
 		ROCKETR_ex     EQU 231 		; RIGTH SIDE END X
@@ -163,6 +164,7 @@ INCLUDE chatlib.inc
 		ROCKET_TODROW  EQU 03FFFFH     ;THE MAIN VALUE TO FILL COUNTER WHEN DISAPEARE
 		ROCKET_TODELETE  EQU 03FFFFH   ;THE MAIN VALUE TO FILL COUNTER WHEN APEARE
 		ROCKET_MAXY    EQU 110         ; MaX VALUE OF Y
+                
 ;*******************************************************
 ;buffer to take name
 		MyBuffer LABEL BYTE ; TO READ IN 
@@ -629,52 +631,35 @@ BULL_CHECK_OTHERS:
 		BULL_CHECK_Rocket:
 		CMP ROCKET_ON,0
 		JZ CHECK_POWER_UP
-		CMP ROCKET_XFLAG,0
-		JZ BULL_CHECK_HELTHROCKRIGHT
+		; CMP ROCKET_XFLAG,0
+		; JZ BULL_CHECK_HELTHROCKRIGHT
 BULL_CHECK_HELTROCKLEFT:	
-			
-		MOV AX,CX
+        MOV AX,CX
         ADD AX,buW
         INC AX
         CMP AX,ROCKETL_fx
-        JNE CHECK_POWER_UP
-        MOV AX,ROCKET_fy
-        ADD AX,ROCKET_LEN
-        SUB AX,DX
-        CMP AX,ROCKET_LEN+3
-        JNC CHECK_POWER_UP
-        PUSHA
-		PUSH DI
-		PUSH SI
-		DELETEP_ROCKET
-		POP SI
-		POP DI
-		POPA
-        JMP DEL_BUL_LEFT
-BULL_CHECK_HELTHROCKRIGHT:	
-		MOV AX,CX
-        ADD AX,buW
-        INC AX
+        JE FOUND_X_ROCK_LEFT
         CMP AX,ROCKETR_fx
-        JNE CHECK_POWER_UP
+        JE FOUND_X_ROCK_RIGHT
+        JMP CHECK_POWER_UP
+FOUND_X_ROCK_LEFT:
+        MOV ROCKET_XFLAG,0
+        JMP SEARCH_ROCK_Y
+FOUND_X_ROCK_RIGHT:
+        MOV ROCKET_XFLAG,1
+SEARCH_ROCK_Y:
         MOV AX,ROCKET_fy
         ADD AX,ROCKET_LEN
         SUB AX,DX
         CMP AX,ROCKET_LEN+3
         JNC CHECK_POWER_UP
-        PUSHA
-		PUSH DI
-		PUSH SI
-		DELETEP_ROCKET
-		POP SI
-		POP DI
-		POPA
+        ; DELETE_ROCK_ONLY
         JMP DEL_BUL_LEFT
         ;*******************************************************
         ;POWER UP CHECKS
         ;*******************************************************
 CHECK_POWER_UP:
-		CMP POWERUP_ON,0
+        CMP POWERUP_ON,0
         JZ MOVE_BULLET_LEFT
         CMP POWERUP_XFLAG,0
         JZ BULL_CHECK_POWERUPRIGHT
@@ -708,7 +693,7 @@ BULL_CHECK_POWERUPRIGHT:
 
         ; Call MVBULL, it moves the left bullet and stores the new position in [SI]
 MOVE_BULLET_LEFT:
-		CALL MVBULL
+        CALL MVBULL
         JMP  END_BUL_LP
         
         ; Branch for left bullet deletion
@@ -761,49 +746,32 @@ BULR_CHECK_OTHERS:
         ;*******************************************************
 		; CHECK ROCKET
         ;*******************************************************
-		BULL_CHECK_Rocket1:
-		CMP ROCKET_ON,0
-		JZ CHECK_POWER_UP_R
-		CMP ROCKET_XFLAG,0
-		JZ BULR_CHECK_HELTHROCKRIGHT
+        BULL_CHECK_Rocket1:
+        CMP ROCKET_ON,0
+        JZ CHECK_POWER_UP_R
 BULR_CHECK_HELTHROCKLEFT:		
-		MOV AX,CX
+        MOV AX,CX
         DEC AX
         CMP AX,ROCKETL_Ex
-        JNE CHECK_POWER_UP_R
-        MOV AX,ROCKET_fy
-        ADD AX,ROCKET_LEN
-        SUB AX,DX
-        CMP AX,ROCKET_LEN+3
-        JNC CHECK_POWER_UP_R
-        PUSHA
-		PUSH DI
-		PUSH SI
-		DELETEP_ROCKET
-		POP SI
-		POP DI
-		POPA
-        JMP DEL_BUL_RIGHT
-BULR_CHECK_HELTHROCKRIGHT:	
-		MOV AX,CX
-        DEC AX
+        JZ  R_FOUND_X_ROCK_LEFT
         CMP AX,ROCKETR_Ex
-        JNE CHECK_POWER_UP_R
+        JZ  R_FOUND_X_ROCK_RIGHT
+        JMP CHECK_POWER_UP_R
+R_FOUND_X_ROCK_LEFT:
+        MOV ROCKET_XFLAG,0
+        JMP R_SEARCH_ROCK_Y
+R_FOUND_X_ROCK_RIGHT:
+        MOV ROCKET_XFLAG,1
+R_SEARCH_ROCK_Y:
         MOV AX,ROCKET_fy
         ADD AX,ROCKET_LEN
         SUB AX,DX
         CMP AX,ROCKET_LEN+3
         JNC CHECK_POWER_UP_R
-        PUSHA
-		PUSH DI
-		PUSH SI
-		DELETEP_ROCKET
-		POP SI
-		POP DI
-		POPA
+        ; DELETE_ROCK_ONLY
         JMP DEL_BUL_RIGHT
         ;*******************************************************
-        ; TODO: HERE YOU CAN DETECT COLLISION IN OTHER OBJECTS
+		; CHECK POWERUP
         ;*******************************************************
 CHECK_POWER_UP_R:
        CMP POWERUP_ON,0
