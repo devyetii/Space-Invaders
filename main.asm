@@ -21,15 +21,22 @@ INCLUDE chatlib.inc
 		CHAR2   DB  ?
 		CHAT_FLAG1 DB 0
 		CHAT_FLAG2 DB 0
+		game_flag1 db 0
+		game_flag2 db 0
+		GAME_LEVEL DB 0
+		SEND_INVITATION DB 0
 ;name page
 ;****************************************************
 		playership1 db 15 dup('$'),'$' ; NAME OF PLAYER SHIP 1
-		playership2 DB 15 DUP('$'),'$' ; NAME OF PLAYER SHIP 2
+		;playership2 DB 15 DUP('$'),'$' ; NAME OF PLAYER SHIP 2
+		PLAYERSHIP2 DB "ALI",'$'
 		MES         DB 'Press enter to continue $','$'
-		MESSHIP1    DB 'Please Enter the name of the left ship player $','$'
-		MESSHIP2    DB 'Please Enter the name of the rigth ship player $','$'
+		MESSHIP1    DB 'Please Enter the name $','$'
 		SCN         DB 1  ; TO DETERMINE NAME PAGE TO PLAYER SHIP 1 '1'OR SHIP 2 '2'
 		word_color equ 0fh	
+		ActualSize1 DB 0
+		SEND_NAME_F DB 0
+		RECIVE_NAME_F DB 0
 ; Printing Strings
 ;****************************************************
 		st0 db "to end game click f4 & TO PAUSE F1 $"
@@ -39,7 +46,9 @@ INCLUDE chatlib.inc
 		st4 db "screen for playing ",10,13,10,13,'$'
 		st5 db "screen for Exiting ",10,13,10,13,'$'
 		st7 db 10,13,10,13,"Click f4 to return to main menu $"
-		ST8 DB 'NEED TO CHAT YOU','$'
+		ST8 DB 'want TO CHAT YOU','$'
+		ST9 DB 'want TO game with YOU','$'
+		ST10 DB "To Start LEVEL ONE press 1 ",10,13,10,13,"       To Start LEVEL TWO press 2",'$'
 		window_winner db "***  The Winner is  *** ",10,13,10,13,'$'
 		equal_window db "***  no one  ****",'$'
 
@@ -154,10 +163,10 @@ INCLUDE chatlib.inc
 		ROCKET_XFLAG     DB  1          ; TO DETRMINE RIGTH '0' OR LEFT '1'
 		ROCKET_fy        dw  4          ; FRIST Y
 		ROCKET_COUNTER   dD  0Affffh    ; COUNTER
-		ROCKET_color     DB 0Dh         ; COLOR 
+		ROCKET_color     DB 0Ch         ; COLOR 
 		ROCKET_ON        DB 0           ;IF IN SCREEN
-                ROCK_L_IS_DRAWN  DB 0
-                ROCK_R_IS_DRAWN  DB 0
+        ROCK_L_IS_DRAWN  DB 0
+        ROCK_R_IS_DRAWN  DB 0
 		ROCKET_LEN     EQU 28
 		ROCKETR_fx     EQU 226 		; RIGTH SIDE FRIST X
 		ROCKETR_ex     EQU 231 		; RIGTH SIDE END X
@@ -205,8 +214,13 @@ MAIN_GET_USER_INP:
         JMP CHAT
  CMP_F2_TO_GAME:
         COMPARE_KEY 03CH        ; Scan code of F2 Key
-        JE GAME
-        COMPARE_KEY 01H        ; Scan code of ESC key
+        JnE compare_esc
+        MOV game_FLAG2,1
+        MOV CHAR1,0FeH
+        SENDMSG
+		jmp game
+compare_esc:   
+		COMPARE_KEY 01H        ; Scan code of ESC key
         JE  ENDG
         JMP MAIN_RECIVE_USER_INP
 MAIN_RECIVE_USER_INP:
@@ -214,17 +228,24 @@ MAIN_RECIVE_USER_INP:
         CMP CHAR2,0             ; Means nothing to recieve
         JZ  MAIN_GET_USER_INP  ; Go to the top of the loop
        COMPARE_KEY_ASCII 0FFH            
-        JNZ MAIN_GET_USER_INP  ; Go to the top of the loop
+        JNZ compare_for_game_loop ; Go to the top of the loop
         MOV CHAT_FLAG1,1
         JMP CHAT
+compare_for_game_loop:
+		COMPARE_KEY_ASCII 0FeH            
+        JNZ MAIN_GET_USER_INP  ; Go to the top of the loop
+        MOV game_FLAG1,1
+        JMP game
+		CALL SHOW_GAME
+        JMP MAIN_MENU 
 		
 ; Branch of Chatting screen calls the SHOW_CHAT Proc.
 CHAT:   CALL SHOW_CHAT 
         JMP MAIN_GET_USER_INP
 
 ; Branch of Game screen calls the SHOW_GAME Proc.
-GAME:   CALL SHOW_GAME
-        JMP MAIN_MENU            ; If the user clicks enter, go to main-menu
+GAME:   CALL SHOW_GAME_level
+        JMP MAIN_GET_USER_INP            ; If the user clicks enter, go to main-menu
 
 ENDG:   DETERMINE_MODE 03H, 00H
         HALT
@@ -256,28 +277,97 @@ PRINT_CMP_FLAG2:
 		JZ GO_CHAT_MODE
 		RET
 GO_CHAT_MODE:		
+		MOV CHAT_FLAG1,0
+		MOV CHAT_FLAG2,0
         DETERMINE_MODE 07H,00H
 		CHAT_MODE1
 		CALL MAIN 
         RET
 SHOW_CHAT ENDP
 
-
+;**************************************************
+;***show game levels two choose level
+;**************************************************
+SHOW_GAME_level proc
+		CMP game_FLAG1,1
+		JZ PRIN_CMP_FLAG2
+		MOV SEND_INVITATION,1
+		RET
+PRIN_CMP_FLAG2:
+		CMP game_FLAG2,1
+		JZ START_LEVEL_PAGE
+		MOVE_CURSOR 7H,11H,0 ;to write in the END of screen
+		PRINTMESSAGE playership2   ;Print 
+		MOVE_CURSOR 7H,12H,0 ;to write in the middle of screen
+		PRINTMESSAGE ST9   
+		MOV SEND_INVITATION,2
+		
+		RET
+START_LEVEL_PAGE:
+		CMP SEND_INVITATION,1
+		JNZ RECIVE_LEVEL
+		DETERMINE_MODE 13H,00H
+		 PREP_BACKBROUND BGCOLOR
+		 MOVE_CURSOR 7H,7H,0 ;to write in the middle of screen
+		 PRINTMESSAGE st10   ;Print 3 cases
+TAKE_LEVEL:
+		 GETKEY
+		 CMP AL,'1'
+		 JNZ LEVEL_TWO
+		 MOV GAME_LEVEL ,1
+		 MOV CHAR1,1
+        SENDMSG
+		CALL SHOW_GAME
+		RET
+		LEVEL_TWO:
+		CMP AL,'2'
+		 JNZ TAKE_LEVEL
+		 MOV GAME_LEVEL ,2
+		 MOV CHAR1,2
+        SENDMSG
+		MOV game_FLAG1,0
+		MOV game_FLAG2,0
+		MOV SEND_INVITATION,0
+		CALL SHOW_GAME
+		RET
+	RECIVE_LEVEL:
+        RECMSG                  ; Function to recieve a byte, stores ASCII in AH, if nothing is sent, it puts CHAR2=0
+        CMP CHAR2,0             ; Means nothing to recieve
+        JZ  RECIVE_LEVEL  ; Go to the top of the loop
+		 CMP CHAR2,1
+		 JNZ RECIVE_LEVEL_TWO
+		 MOV GAME_LEVEL ,1
+		 CALL SHOW_GAME
+		 RET
+		RECIVE_LEVEL_TWO:
+		CMP CHAR2,2
+		 JNZ RECIVE_LEVEL
+		 MOV GAME_LEVEL ,2
+		 MOV game_FLAG1,0
+		 MOV game_FLAG2,0
+		 MOV SEND_INVITATION,0
+		 CALL SHOW_GAME
+		 RET
+SHOW_GAME_level endp
 ;*************************************************
 ; **** SHOW_GAME - Shows the game screen ****
 ; * USES :  ALL
 ; * PARAMS :  DI => *First_Empty_Byte
 ; ************************************************
 SHOW_GAME PROC
+		
+GO_game_MODE:		
         ; Reseting all game variables in the memory
         CALL CLRMEMORY
         ; Drawing and preparing
         PREP_BACKBROUND BGCOLOR
         CALL DRWINFO
-        CALL DRWREFL
         CALL DRWSHIPS
         call drawhelthsh1
         call drawhelthsh2
+		CMP GAME_LEVEL,1
+		JNZ GM_LP
+		CALL DRWREFL
 		
 GM_LP:
         ; Handling counters and drawing of Powerups		
@@ -296,18 +386,20 @@ DELETE_POWERUP:
 continue2:
         DEC ROCKET_COUNTER
         CMP ROCKET_COUNTER,0
-        JNZ continue1
+        JNZ continue0
         CMP ROCKET_ON,0
         JZ   DROW_ROCKET
         JNZ DELETE_ROCKET		
 DROW_ROCKET:		
         DROWPRE_ROCKET
-        JMP continue1
+        JMP continue0
 DELETE_ROCKET:
         DELETEP_ROCKET
-        JMP continue1	
+        JMP continue0	
 
-			
+continue0:
+		CMP GAME_LEVEL,1
+		JNZ CHK_BULL
 continue1:
         ; Moving Reflector and bullets
         ; Cheking for Moving the Reflector
@@ -612,7 +704,9 @@ GO_BULLS_GO:
         JMP DEL_BUL_LEFT
 		
 BULL_CHECK_REFL:
-        ; 3. Reflector
+		CMP GAME_LEVEL,1
+		JNZ BULL_CHECK_OTHERS  ; TO CHECK LEVEL ONE 
+        ; 3.CONSTANT  Reflector
         ; TODO: -for me- Add comments
         MOV AX,CX
         ADD AX,buW
@@ -655,7 +749,10 @@ SEARCH_ROCK_Y:
         SUB AX,DX
         CMP AX,ROCKET_LEN+3
         JNC CHECK_POWER_UP
-        ; DELETE_ROCK_ONLY
+		CMP ROCKET_COLOR,0DH
+		JNZ DELETE_ROCK_ONLYL
+		JMP INV_BULL
+    DELETE_ROCK_ONLYL:
         JMP DEL_BUL_LEFT
         ;*******************************************************
         ;POWER UP CHECKS
@@ -730,7 +827,9 @@ R_MV:
         JMP DEL_BUL_RIGHT
 
 BULR_CHECK_REFL:        
-        ; 3. Reflector
+		CMP GAME_LEVEL,1
+		JNZ BULR_CHECK_OTHERS   ; BECOUSE LEVEL ONE ONLY HAS CONSTANT REFLECTOR
+        ; 3. CONSTANT Reflector
         ; TODO: -for me- Add comments
         CMP CX,REFendX
         JNE BULR_CHECK_OTHERS
@@ -769,7 +868,10 @@ R_SEARCH_ROCK_Y:
         SUB AX,DX
         CMP AX,ROCKET_LEN+3
         JNC CHECK_POWER_UP_R
-        ; DELETE_ROCK_ONLY
+		CMP ROCKET_COLOR,0DH
+		JNZ DELETE_ROCK_ONLYr
+		JMP INV_BULR	
+      DELETE_ROCK_ONLYr:
         JMP DEL_BUL_RIGHT
         ;*******************************************************
 		; CHECK POWERUP
@@ -1282,6 +1384,7 @@ FINISHED_CLEANING_BULLS:
         ; Reset health
 	MOV sh1health,10D
         MOV sh2health,10D  
+		MOV ROCKET_COLOR,0CH
         ; Check for any undeleted powerups and delete them
        ; MOV HB_ON,0H
         RET

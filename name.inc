@@ -10,33 +10,16 @@
 		;***********************TO MOVE DATA FROM BUFFER TO OWNER SHIP NAME
 		nameloop:
 			mov SI,offset BufferData
-			CMP SCN,1H       ;TO CHECK NAME OF PLAYER ONE OR TWO 
-			JNZ labn4
-			JZ labn5
-			labn4:
-				mov DI,offset playership2
-			JMP labn6
-			labn5:
-				mov DI,offset playership1
-			labn6:
+			mov DI,offset playership1
+		labn6:
 				mov cL,ActualSize   
 				XOR CH,CH
 				REP MOVSB;Copies the first ActualSize  BYTE from SI to DI
-				mov cl,scn
-				CMP SCN,1H ;TO CHECK NAME OF PLAYER ONE OR TWO
-			JZ labn7
-			jnz labn9
-			labn7:
-				MOV AL,2H ; TO CHANGE TO PLAYER TWO
-				MOV SCN,AL
-			 NAMEPAGE ;*****************TO TACK NAME OF THE PLAYER SHIP 2
-			 labn9:
-			 mov dl, 08H
-				mov dh, 0fH
-				 CURSOR1
-				PRINTMESSAGE playership2
-			cmp cl,2
-			jnz nameloop
+				mov DI,offset playership1
+				MOV AL,ActualSize
+				MOV CHAR1,AL
+				SENDMSG
+		
 		;*************************
 		endm name_Page 
 		
@@ -75,23 +58,9 @@
 		local cont
 			ENTERN1:
 			PREP_BACKBROUND word_color
-			
 			mov dl, 07H
 			mov dh, 6H
 			 CURSOR1
-			 jmp cont
-			endag1:
-			 jmp ENTERN1 
-			 cont:
-			CMP SCN,1H ;TO CHECK PLAYER ONE OR TWO
-			JZ labn1
-			JNZ labn2
-			endag:
-			 jmp endag1
-			labn2:
-			PRINTMESSAGE MESSHIP2
-			JMP labn3
-			labn1:
 			PRINTMESSAGE MESSHIP1
 			labn3:
 			mov dl, 07H
@@ -104,21 +73,24 @@
 			 cursor1_on
 			 READ1 
 			CMP BufferData,'$' ; TO CHECK IF PLAYER ENTER NOTHING .
-			JB endag 
+			JB ENTERN1 
 			CMP BufferData,'A' ; TO CHECK THE FIRST CHAR (No digits or special characters).
-			JB endag
+			JB ENTERN1
 			CMP BufferData,'Z'
 			JBE ENDNAME
 			CMP BufferData,'a'
-			JB endag
+			JB ENTERN1
 			CMP BufferData,'z'
-			JA endag
+			JA ENTERN1
 			ENDNAME:
 				CMP ActualSize,15 ; TO CHECK NAME NOT BIG THAN 15
-			JA  endag
+			JA  ENTERN1
 			
 		ENDm NAMEPAGE 
 		
 		
 		
 		;*************************************
+		
+		
+		
